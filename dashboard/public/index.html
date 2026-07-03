@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAQ Board — Live Monitor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0f16;
+    --panel: #111823;
+    --panel-2: #16202d;
+    --panel-3: #1d2937;
+    --border: #223142;
+    --border-hi: #2f435a;
+    --text: #dbe4ee;
+    --text-mid: #8595a8;
+    --text-dim: #5a6b7e;
+    --ch0: #ff7a45;
+    --ch1: #22e0a1;
+    --ch2: #5b9dff;
+    --ch3: #ffcb47;
+    --dac: #b57bff;
+    --temp: #ff5c8a;
+    --danger: #ff4d4d;
+    --success: #22e0a1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* ============ HEADER ============ */
+  header {
+    height: 56px; flex-shrink: 0;
+    padding: 0 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+  }
+  .brand { display: flex; align-items: center; gap: 0.85rem; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 8px;
+    border: 1.5px solid var(--ch1);
+    display: grid; place-items: center;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 0.7rem;
+    color: var(--ch1); letter-spacing: 0.5px;
+    box-shadow: 0 0 20px rgba(34,224,161,0.12), inset 0 0 12px rgba(34,224,161,0.05);
+  }
+  .brand-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.2px; }
+  .brand-sub {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    color: var(--text-dim); letter-spacing: 1px;
+  }
+  .header-controls { display: flex; align-items: center; gap: 0.6rem; }
+
+  .ctrl-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; font-weight: 500;
+    padding: 0.5rem 0.9rem; border-radius: 7px;
+    border: 1px solid var(--border-hi); background: var(--panel-2);
+    color: var(--text-mid); cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .ctrl-btn:hover { border-color: var(--ch1); color: var(--text); background: var(--panel-3); }
+  .ctrl-btn.rec-active { border-color: var(--danger); color: var(--danger); background: rgba(255,77,77,0.1); }
+  .ctrl-btn.export-ready { border-color: var(--success); color: var(--success); }
+
+  .conn {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0.9rem; border-radius: 7px;
+    border: 1px solid var(--border-hi); background: var(--panel-2);
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--text-mid);
+  }
+  .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+  .conn-dot.on { background: var(--success); box-shadow: 0 0 8px var(--success); animation: blink 2s infinite; }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  /* ============ MEASUREMENT TILES ============ */
+  .tiles {
+    flex-shrink: 0;
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 1px; background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .tile {
+    background: var(--panel); padding: 0.85rem 1.1rem;
+    position: relative; overflow: hidden;
+  }
+  .tile::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--accent);
+  }
+  .tile-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-mid);
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.35rem;
+  }
+  .tile-addr {
+    font-size: 0.55rem; color: var(--text-dim);
+    padding: 0.1rem 0.35rem; border-radius: 3px; background: var(--panel-3);
+  }
+  .tile-value {
+    font-family: 'IBM Plex Mono', monospace; font-weight: 600;
+    font-size: 1.9rem; line-height: 1; color: var(--accent);
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tile-value .u { font-size: 0.75rem; font-weight: 400; color: var(--text-mid); margin-left: 0.25rem; letter-spacing: 0; }
+  .tile-stats {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem;
+    color: var(--text-dim); margin-top: 0.45rem; letter-spacing: 0.3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ============ MAIN ============ */
+  .main {
+    flex: 1; display: grid;
+    grid-template-columns: 1fr 300px;
+    grid-template-rows: 100%;
+    min-height: 0; overflow: hidden;
+  }
+
+  /* Scope */
+  .scope-wrap {
+    display: flex; flex-direction: column; min-height: 0;
+    border-right: 1px solid var(--border);
+  }
+  .scope-bar {
+    height: 40px; flex-shrink: 0;
+    padding: 0 1.1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  .scope-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
+  }
+  .scope-legends { display: flex; gap: 0.4rem; }
+  .legend {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; font-weight: 500;
+    color: var(--text); padding: 0.3rem 0.6rem; border-radius: 6px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    cursor: pointer; user-select: none; transition: all 0.12s;
+  }
+  .legend:hover { border-color: var(--border-hi); }
+  .legend.off { opacity: 0.35; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+  .scope {
+    flex: 1; position: relative; background: #070b11; min-height: 0;
+  }
+  .scope canvas { width: 100%; height: 100%; display: block; }
+  .scope-readout {
+    position: absolute; bottom: 0.85rem; left: 1rem;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+    color: var(--text-dim); background: rgba(7,11,17,0.9);
+    padding: 0.4rem 0.7rem; border-radius: 6px; border: 1px solid var(--border);
+    letter-spacing: 0.5px;
+  }
+
+  /* Control rail */
+  .rail {
+    display: flex; flex-direction: column; min-height: 0;
+    overflow-y: auto; background: var(--panel);
+  }
+  .rail::-webkit-scrollbar { width: 5px; }
+  .rail::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+  .rail-block { padding: 1.1rem 1.2rem; border-bottom: 1px solid var(--border); }
+  .rail-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
+    margin-bottom: 0.9rem;
+  }
+
+  select.gain {
+    width: 100%; padding: 0.7rem 0.8rem; border-radius: 8px;
+    background: var(--panel-2); border: 1px solid var(--border-hi);
+    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+    cursor: pointer; outline: none; transition: border-color 0.15s;
+  }
+  select.gain:focus { border-color: var(--ch2); }
+
+  .dac-big {
+    font-family: 'IBM Plex Mono', monospace; font-weight: 700;
+    font-size: 2.2rem; line-height: 1; color: var(--dac);
+    text-align: center; margin-bottom: 0.15rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .dac-big .u { font-size: 0.8rem; font-weight: 400; color: var(--text-mid); }
+  .dac-raw {
+    text-align: center; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem; color: var(--text-dim); margin-bottom: 1rem;
+  }
+  input[type="range"] {
+    -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--dac) 0%, var(--dac) var(--fill,50%), var(--panel-3) var(--fill,50%));
+    outline: none; margin-bottom: 0.9rem;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--dac); cursor: pointer;
+    box-shadow: 0 0 12px rgba(181,123,255,0.5); border: 3px solid var(--bg);
+  }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+  .preset {
+    padding: 0.5rem 0; border-radius: 6px; text-align: center;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text-mid); cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    transition: all 0.12s;
+  }
+  .preset:hover { border-color: var(--dac); color: var(--dac); background: var(--panel-3); }
+
+  .info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+    padding: 0.35rem 0; color: var(--text-mid);
+  }
+  .info-row .v { color: var(--text); }
+
+  /* ============ BOTTOM ============ */
+  .bottom {
+    height: 180px; flex-shrink: 0;
+    display: grid; grid-template-columns: 1fr 340px; grid-template-rows: 180px;
+    border-top: 1px solid var(--border); overflow: hidden;
+  }
+  .temp-panel {
+    display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+    border-right: 1px solid var(--border); background: var(--panel);
+  }
+  .temp-bar {
+    height: 34px; flex-shrink: 0; padding: 0 1.1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .temp-bar-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
+  }
+  .live-tag {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--temp);
+    display: flex; align-items: center; gap: 0.35rem;
+  }
+  .live-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--temp); animation: blink 1.5s infinite; }
+  .temp-canvas-wrap { flex: 1; padding: 0.5rem 0.75rem; min-height: 0; }
+  .temp-canvas-wrap canvas { width: 100%; height: 100%; }
+
+  .log-panel { display: flex; flex-direction: column; background: var(--panel); min-height: 0; overflow: hidden; }
+  .log-bar {
+    height: 34px; flex-shrink: 0; padding: 0 1.1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
+  }
+  .log-body {
+    flex: 1; overflow-y: auto; padding: 0.5rem 1.1rem; min-height: 0;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; line-height: 1.75;
+  }
+  .log-body::-webkit-scrollbar { width: 4px; }
+  .log-body::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+  .log-line { display: flex; gap: 0.7rem; white-space: nowrap; }
+  .log-time { color: var(--text-dim); }
+
+  /* ============ FOOTER ============ */
+  .footer {
+    height: 30px; flex-shrink: 0; padding: 0 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border); background: var(--panel);
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem;
+    color: var(--text-dim); letter-spacing: 0.5px;
+  }
+  .footer-right { display: flex; gap: 1.5rem; }
+  .footer-right .hl { color: var(--text-mid); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">DAQ</div>
+    <div>
+      <div class="brand-title">DAQ Board</div>
+      <div class="brand-sub">STM32F103 · Data Acquisition</div>
+    </div>
+  </div>
+  <div class="header-controls">
+    <button class="ctrl-btn" id="btnRecord">● REC</button>
+    <button class="ctrl-btn" id="btnExport">↓ EXPORT CSV</button>
+    <div class="conn">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connText">DISCONNECTED</span>
+    </div>
+  </div>
+</header>
+
+<!-- Measurement tiles -->
+<div class="tiles">
+  <div class="tile" style="--accent:var(--temp)">
+    <div class="tile-label">Temp <span class="tile-addr">0x49</span></div>
+    <div class="tile-value" id="tTemp">--.--<span class="u">°C</span></div>
+    <div class="tile-stats" id="sTemp">—</div>
+  </div>
+  <div class="tile" style="--accent:var(--ch0)">
+    <div class="tile-label">AIN0 <span class="tile-addr">ADS1115</span></div>
+    <div class="tile-value" id="tCh0">-.---<span class="u">V</span></div>
+    <div class="tile-stats" id="sCh0">—</div>
+  </div>
+  <div class="tile" style="--accent:var(--ch1)">
+    <div class="tile-label">AIN1 <span class="tile-addr">ADS1115</span></div>
+    <div class="tile-value" id="tCh1">-.---<span class="u">V</span></div>
+    <div class="tile-stats" id="sCh1">—</div>
+  </div>
+  <div class="tile" style="--accent:var(--ch2)">
+    <div class="tile-label">AIN2 <span class="tile-addr">ADS1115</span></div>
+    <div class="tile-value" id="tCh2">-.---<span class="u">V</span></div>
+    <div class="tile-stats" id="sCh2">—</div>
+  </div>
+  <div class="tile" style="--accent:var(--ch3)">
+    <div class="tile-label">AIN3 <span class="tile-addr">ADS1115</span></div>
+    <div class="tile-value" id="tCh3">-.---<span class="u">V</span></div>
+    <div class="tile-stats" id="sCh3">—</div>
+  </div>
+  <div class="tile" style="--accent:var(--dac)">
+    <div class="tile-label">DAC Out <span class="tile-addr">0x60</span></div>
+    <div class="tile-value" id="tDac">-.---<span class="u">V</span></div>
+    <div class="tile-stats" id="sDac">MCP4725 · 12-bit</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="scope-wrap">
+    <div class="scope-bar">
+      <span class="scope-title">Analog Inputs · Oscilloscope</span>
+      <div class="scope-legends">
+        <div class="legend" data-ch="0"><span class="legend-dot" style="background:var(--ch0)"></span>AIN0</div>
+        <div class="legend" data-ch="1"><span class="legend-dot" style="background:var(--ch1)"></span>AIN1</div>
+        <div class="legend" data-ch="2"><span class="legend-dot" style="background:var(--ch2)"></span>AIN2</div>
+        <div class="legend" data-ch="3"><span class="legend-dot" style="background:var(--ch3)"></span>AIN3</div>
+      </div>
+    </div>
+    <div class="scope">
+      <canvas id="scopeCanvas"></canvas>
+      <div class="scope-readout" id="scopeReadout">Waiting for data…</div>
+    </div>
+  </div>
+
+  <div class="rail">
+    <div class="rail-block">
+      <div class="rail-label">ADC Input Range (PGA)</div>
+      <select class="gain" id="pgaSelect">
+        <option value="0">±6.144 V — 187.5 µV/bit</option>
+        <option value="1" selected>±4.096 V — 125 µV/bit</option>
+        <option value="2">±2.048 V — 62.5 µV/bit</option>
+        <option value="3">±1.024 V — 31.25 µV/bit</option>
+        <option value="4">±0.512 V — 15.6 µV/bit</option>
+        <option value="5">±0.256 V — 7.8 µV/bit</option>
+      </select>
+    </div>
+
+    <div class="rail-block">
+      <div class="rail-label">DAC Output Control</div>
+      <div class="dac-big" id="dacBig">1.650<span class="u">V</span></div>
+      <div class="dac-raw" id="dacRaw">code 2048 / 4095</div>
+      <input type="range" id="dacSlider" min="0" max="4095" value="2048" step="1">
+      <div class="presets">
+        <div class="preset" data-val="0">0 V</div>
+        <div class="preset" data-val="410">0.33 V</div>
+        <div class="preset" data-val="1024">0.82 V</div>
+        <div class="preset" data-val="2048">1.65 V</div>
+        <div class="preset" data-val="3072">2.48 V</div>
+        <div class="preset" data-val="4095">3.30 V</div>
+      </div>
+    </div>
+
+    <div class="rail-block">
+      <div class="rail-label">Peripherals</div>
+      <div class="info-row"><span>MCU</span><span class="v">STM32F103C8T6</span></div>
+      <div class="info-row"><span>ADC</span><span class="v">ADS1115 · 16-bit</span></div>
+      <div class="info-row"><span>Sensor</span><span class="v">TMP117 ±0.1°C</span></div>
+      <div class="info-row"><span>Flash</span><span class="v">W25Q32 · 4 MB</span></div>
+      <div class="info-row"><span>JEDEC ID</span><span class="v" style="color:var(--ch1)">EF 40 16</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom -->
+<div class="bottom">
+  <div class="temp-panel">
+    <div class="temp-bar">
+      <span class="temp-bar-title">Temperature History · TMP117</span>
+      <span class="live-tag">LIVE</span>
+    </div>
+    <div class="temp-canvas-wrap"><canvas id="tempCanvas"></canvas></div>
+  </div>
+  <div class="log-panel">
+    <div class="log-bar"><span>Data Stream</span><span id="sampleCount">0</span></div>
+    <div class="log-body" id="logBody"></div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>Alex Morral · Telecom Engineering Portfolio</span>
+  <div class="footer-right">
+    <span>SAMPLE RATE <span class="hl" id="sps">0 S/s</span></span>
+    <span id="clock">--:--:--</span>
+  </div>
+</div>
+
+<script>
+const MAX_POINTS = 150;
+const CH_COLORS = ['#ff7a45', '#22e0a1', '#5b9dff', '#ffcb47'];
+const CH_GLOWS = ['rgba(255,122,69,0.10)', 'rgba(34,224,161,0.10)', 'rgba(91,157,255,0.10)', 'rgba(255,203,71,0.10)'];
+const PGA_LABELS = ['±6.144V', '±4.096V', '±2.048V', '±1.024V', '±0.512V', '±0.256V'];
+const PGA_MAX = [6.144, 4.096, 2.048, 1.024, 0.512, 0.256];
+
+let chData = [[], [], [], []];
+let tempData = [];
+let chVisible = [true, true, true, true];
+let sampleCount = 0, spsCounter = 0, lastSps = Date.now();
+let recording = false, recorded = [];
+
+let st = {
+  temp: { min: Infinity, max: -Infinity, sum: 0, n: 0 },
+  ch: [0,1,2,3].map(() => ({ min: Infinity, max: -Infinity, sum: 0, n: 0 }))
+};
+function upd(o, v) { o.min = Math.min(o.min, v); o.max = Math.max(o.max, v); o.sum += v; o.n++; }
+function fmt(o, u, d) { return o.n ? `min ${o.min.toFixed(d)}  max ${o.max.toFixed(d)}  avg ${(o.sum/o.n).toFixed(d)}${u}` : '—'; }
+
+function drawScope() {
+  const cv = document.getElementById('scopeCanvas'), ctx = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+  cv.width = r.width*dpr; cv.height = r.height*dpr; ctx.scale(dpr,dpr);
+  const w = r.width, h = r.height; ctx.clearRect(0,0,w,h);
+
+  const pad = { t: 18, b: 24, l: 60, r: 18 };
+  const cw = w-pad.l-pad.r, ch = h-pad.t-pad.b;
+  const pga = parseInt(document.getElementById('pgaSelect').value);
+  const yMax = PGA_MAX[pga], yMin = -yMax, yR = yMax-yMin;
+
+  const xp = i => pad.l + (i/(MAX_POINTS-1))*cw;
+  const yp = v => pad.t + ch - ((v-yMin)/yR)*ch;
+
+  // grid
+  ctx.font = '11px "IBM Plex Mono", monospace';
+  for (let i=0;i<=8;i++){
+    const gy = pad.t + (ch/8)*i;
+    ctx.strokeStyle = 'rgba(34,49,66,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(w-pad.r,gy); ctx.stroke();
+    ctx.fillStyle='#5a6b7e'; ctx.textAlign='right';
+    ctx.fillText((yMax-(yR/8)*i).toFixed(2)+'V', pad.l-8, gy+4);
+  }
+  for (let i=0;i<=8;i++){
+    const gx = pad.l + (cw/8)*i;
+    ctx.strokeStyle='rgba(34,49,66,0.4)';
+    ctx.beginPath(); ctx.moveTo(gx,pad.t); ctx.lineTo(gx,h-pad.b); ctx.stroke();
+  }
+  // zero line
+  ctx.strokeStyle='rgba(120,140,160,0.35)'; ctx.setLineDash([5,5]);
+  const zy=yp(0); ctx.beginPath(); ctx.moveTo(pad.l,zy); ctx.lineTo(w-pad.r,zy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  for (let c=0;c<4;c++){
+    if(!chVisible[c] || chData[c].length<2) continue;
+    const d=chData[c], si=MAX_POINTS-d.length;
+    const g=ctx.createLinearGradient(0,pad.t,0,h-pad.b);
+    g.addColorStop(0,CH_GLOWS[c]); g.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.moveTo(xp(si),yp(d[0]));
+    for(let i=1;i<d.length;i++) ctx.lineTo(xp(si+i),yp(d[i]));
+    ctx.lineTo(xp(si+d.length-1),h-pad.b); ctx.lineTo(xp(si),h-pad.b);
+    ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(xp(si),yp(d[0]));
+    for(let i=1;i<d.length;i++) ctx.lineTo(xp(si+i),yp(d[i]));
+    ctx.strokeStyle=CH_COLORS[c]; ctx.lineWidth=1.8; ctx.lineJoin='round'; ctx.stroke();
+    const lx=xp(si+d.length-1), ly=yp(d[d.length-1]);
+    ctx.beginPath(); ctx.arc(lx,ly,3.5,0,7); ctx.fillStyle=CH_COLORS[c]; ctx.fill();
+    ctx.beginPath(); ctx.arc(lx,ly,7,0,7); ctx.fillStyle=CH_GLOWS[c]; ctx.fill();
+  }
+}
+
+function drawTemp() {
+  const cv=document.getElementById('tempCanvas'), ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.scale(dpr,dpr);
+  const w=r.width,h=r.height; ctx.clearRect(0,0,w,h);
+  if(tempData.length<2) return;
+  const pad={t:8,b:18,l:44,r:12}, cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const tMin=st.temp.min-0.4, tMax=st.temp.max+0.4, tR=(tMax-tMin)||1;
+  const xp=i=>pad.l+(i/(MAX_POINTS-1))*cw, yp=v=>pad.t+ch-((v-tMin)/tR)*ch;
+  ctx.font='10px "IBM Plex Mono", monospace';
+  for(let i=0;i<=3;i++){
+    const gy=pad.t+(ch/3)*i;
+    ctx.strokeStyle='rgba(34,49,66,0.5)';
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(w-pad.r,gy); ctx.stroke();
+    ctx.fillStyle='#5a6b7e'; ctx.textAlign='right';
+    ctx.fillText((tMax-(tR/3)*i).toFixed(1)+'°', pad.l-5, gy+3);
+  }
+  const si=MAX_POINTS-tempData.length;
+  const g=ctx.createLinearGradient(0,pad.t,0,h-pad.b);
+  g.addColorStop(0,'rgba(255,92,138,0.12)'); g.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.moveTo(xp(si),yp(tempData[0]));
+  for(let i=1;i<tempData.length;i++) ctx.lineTo(xp(si+i),yp(tempData[i]));
+  ctx.lineTo(xp(si+tempData.length-1),h-pad.b); ctx.lineTo(xp(si),h-pad.b);
+  ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(xp(si),yp(tempData[0]));
+  for(let i=1;i<tempData.length;i++) ctx.lineTo(xp(si+i),yp(tempData[i]));
+  ctx.strokeStyle='#ff5c8a'; ctx.lineWidth=1.8; ctx.stroke();
+}
+
+document.querySelectorAll('.legend').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const c=parseInt(el.dataset.ch); chVisible[c]=!chVisible[c];
+    el.classList.toggle('off'); drawScope();
+  });
+});
+
+const slider=document.getElementById('dacSlider');
+let ws;
+function setDac(val){
+  const v=(val/4095*3.3).toFixed(3);
+  document.getElementById('dacBig').innerHTML=v+'<span class="u">V</span>';
+  document.getElementById('dacRaw').textContent='code '+val+' / 4095';
+  slider.style.setProperty('--fill',(val/4095*100)+'%');
+  if(ws&&ws.readyState===1) ws.send('DAC:'+val);
+}
+slider.addEventListener('input',()=>setDac(parseInt(slider.value)));
+document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{
+  slider.value=b.dataset.val; setDac(parseInt(b.dataset.val));
+}));
+document.getElementById('pgaSelect').addEventListener('change',e=>{
+  if(ws&&ws.readyState===1) ws.send('PGA:'+e.target.value);
+});
+
+document.getElementById('btnRecord').addEventListener('click',function(){
+  recording=!recording; this.classList.toggle('rec-active');
+  this.textContent=recording?'■ STOP':'● REC';
+  if(!recording&&recorded.length) document.getElementById('btnExport').classList.add('export-ready');
+});
+document.getElementById('btnExport').addEventListener('click',()=>{
+  if(!recorded.length) return;
+  let csv='timestamp,temp_C,ain0_V,ain1_V,ain2_V,ain3_V,dac_code,pga\n';
+  recorded.forEach(d=>csv+=`${d.timestamp},${d.temperature},${d.channels.join(',')},${d.dac},${d.pga}\n`);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`daq_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`; a.click();
+});
+
+function connect(){
+  ws=new WebSocket(`ws://${location.host}`);
+  ws.onopen=()=>{ document.getElementById('connDot').classList.add('on'); document.getElementById('connText').textContent='COM4 · 9600'; };
+  ws.onclose=()=>{ document.getElementById('connDot').classList.remove('on'); document.getElementById('connText').textContent='DISCONNECTED'; setTimeout(connect,2000); };
+  ws.onmessage=ev=>{
+    const d=JSON.parse(ev.data); sampleCount++; spsCounter++;
+    document.getElementById('tTemp').innerHTML=d.temperature.toFixed(2)+'<span class="u">°C</span>';
+    upd(st.temp,d.temperature); document.getElementById('sTemp').textContent=fmt(st.temp,'',2);
+    tempData.push(d.temperature); if(tempData.length>MAX_POINTS) tempData.shift();
+    for(let i=0;i<4;i++){
+      document.getElementById('tCh'+i).innerHTML=d.channels[i].toFixed(3)+'<span class="u">V</span>';
+      upd(st.ch[i],d.channels[i]); document.getElementById('sCh'+i).textContent=fmt(st.ch[i],'',3);
+      chData[i].push(d.channels[i]); if(chData[i].length>MAX_POINTS) chData[i].shift();
+    }
+    const dv=(d.dac/4095*3.3).toFixed(3);
+    document.getElementById('tDac').innerHTML=dv+'<span class="u">V</span>';
+    document.getElementById('scopeReadout').textContent=`${sampleCount} samples · range ${PGA_LABELS[d.pga]} · ${chData[0].length}/${MAX_POINTS} pts`;
+    drawScope(); drawTemp();
+    const t=new Date(d.timestamp).toLocaleTimeString('es-ES');
+    const lb=document.getElementById('logBody'), ln=document.createElement('div');
+    ln.className='log-line';
+    ln.innerHTML=`<span class="log-time">${t}</span>`+
+      `<span style="color:var(--temp)">${d.temperature.toFixed(2)}°</span>`+
+      d.channels.map((c,i)=>`<span style="color:${CH_COLORS[i]}">${c.toFixed(3)}</span>`).join('');
+    lb.appendChild(ln); if(lb.children.length>80) lb.removeChild(lb.firstChild);
+    lb.scrollTop=lb.scrollHeight;
+    document.getElementById('sampleCount').textContent=sampleCount;
+    if(recording) recorded.push(d);
+  };
+}
+connect();
+
+setInterval(()=>{
+  const now=Date.now(), el=(now-lastSps)/1000;
+  document.getElementById('sps').textContent=(spsCounter/el).toFixed(1)+' S/s';
+  spsCounter=0; lastSps=now;
+},2000);
+setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('es-ES'); },1000);
+window.addEventListener('resize',()=>{ drawScope(); drawTemp(); });
+const ro=new ResizeObserver(()=>{ drawScope(); drawTemp(); });
+ro.observe(document.getElementById('scopeCanvas'));
+ro.observe(document.getElementById('tempCanvas'));
+drawScope(); drawTemp();
+</script>
+</body>
+</html>

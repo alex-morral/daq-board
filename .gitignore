@@ -1,0 +1,33 @@
+# Build artifacts
+*.elf
+*.bin
+*.hex
+*.o
+*.map
+firmware/build/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS / editor / tooling config
+Thumbs.db
+.DS_Store
+.vscode/
+.claude/
+*.swp
+
+# Datos personales / privados (NO subir)
+# facturas, direcciones, VAT, datos de la empresa
+private/
+*.invoice.*
+images/pedido_jlcpcb.jpeg
+
+# Altium: keep only the DAQ_Board project (source + outputs), not the
+# app's install examples, logs, or heavy backup snapshots
+Altium/AD26/
+Altium/Logs/
+Altium/DAQ_Board/History/
+Altium/DAQ_Board/__Previews/
+Altium/DAQ_Board/Project Logs for DAQ_Board/
+Altium/DAQ_Board/Project Logs for DAQ_Board*/

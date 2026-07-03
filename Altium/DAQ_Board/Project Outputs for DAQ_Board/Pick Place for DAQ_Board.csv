@@ -1,0 +1,54 @@
+Altium Designer Pick and Place Locations
+C:\Users\Public\Documents\Altium\DAQ_Board\Project Outputs for DAQ_Board\Pick Place for DAQ_Board.csv
+
+========================================================================================================================
+File Design Information:
+
+Date:       22/06/26
+Time:       13:10
+Revision:   Not in VersionControl
+Variant:    No variations
+Units used: mm
+
+"Designator","Comment","Layer","Footprint","Center-X(mm)","Center-Y(mm)","Rotation","Description"
+"Y2","C3E-8.000-18-3030-X-R","TopLayer","XTAL_C3E-8.000-18-3030-X-R","26.3730","22.5180","0","Crystal, 3.20mm x2.50mm,8MHz,18pF,-40-85C"
+"Y1","ABM3B-12.000MHZ-B2-T","TopLayer","XTAL_ABM3B-12.000MHZ-B2-T","21.0820","15.1130","180","12 MHz ±20ppm Crystal 18pF 70 Ohms 4-SMD, No Lead"
+"U8","MCP4725A0T-E/CH","TopLayer","FP-C04-028-CHY-IPC_A","47.7520","9.9060","0","IC DAC 12BIT V-OUT SOT23-6"
+"U7","W25Q32JVSSIQ","TopLayer","SOIC127P790X216-8N","51.5620","33.7820","90","FLASH - NOR Memory IC 32Mb (4M x 8) SPI - Quad I/O 133 MHz 8-SOIC"
+"U6","TMP117MAIDRVR","TopLayer","FP-DRV0006B-IPC_C","46.0395","15.0010","0","TEMPERATURE SENSOR"
+"U5","ADS1115IDGST","TopLayer","TI-DGS10_M","44.3230","21.3360","90","16-Bit ADC with Integrated Multiplexer, PGA, Comparator, Oscillator, and Reference, -40 to 125 degC, 10-pin SOP (DGS10), Green (RoHS & no Sb/Br)"
+"U4","AMS1117-3.3","TopLayer","FP-AMS1117-IPC_C","4.8260","20.1930","0","LDO Voltage Regulators 1A, 3.3V"
+"U3","STM32F103C8T6","TopLayer","STM-LQFP48_L","35.1790","19.5580","0","ARM Cortex-M3 32-bit MCU, 64 KB Flash, 20 KB Internal RAM, 37 I/Os, 48-pin LQFP, -40 to 85 degC, Tray"
+"U2","USBLC6-2SC6","TopLayer","SOT95P280X145-6N","2.9210","11.0490","0","17V Clamp 5A (8/20µs) Ipp Tvs Diode Surface Mount SOT-23-6"
+"U1","CH340G","TopLayer","SOIC127P600X180-16N","13.4620","15.6210","180","USB Interface Integrated Circuit"
+"S1","USLPT2819DT2TR","TopLayer","SW_USLPT2819DT2TR","30.8610","29.3370","0","TACT ULTRA TB 2.8X1.9X0.6 160GF"
+"R8","RC0805FR-071KL","TopLayer","RESC2013X60X35ML10T20","28.5910","4.5720","0","Chip Resistor, 1 KOhm, +/- 1%, 125 mW, -55 to 155 degC, 0805 (2012 Metric), RoHS, Tape and Reel"
+"R7","RC0805FR-071KL","TopLayer","RESC2013X60X35ML10T20","39.2590","12.0650","0","Chip Resistor, 1 KOhm, +/- 1%, 125 mW, -55 to 155 degC, 0805 (2012 Metric), RoHS, Tape and Reel"
+"R6","RC0805FR-071KL","TopLayer","RESC2013X60X35ML10T20","20.7010","28.0670","0","Chip Resistor, 1 KOhm, +/- 1%, 125 mW, -55 to 155 degC, 0805 (2012 Metric), RoHS, Tape and Reel"
+"R5","RC0805FR-07100RL","TopLayer","RESC2013X60X35ML10T20","25.6540","28.3210","0","Chip Resistor, 100 Ohm, +/-1%, 0.125 W, -55 to 155 degC, 0805 (2012 Metric), RoHS, Tape and Reel"
+"R4","RC0805FR-074K7L","TopLayer","YAGO-RC0805_M","50.7840","20.3200","0","General Puprose Chip Resistor, 4700 Ohm +/- 1%, 0.125 W, -55 to 155 degC, 2-Pin SMD, RoHS, Tape and Reel"
+"R3","RC0805FR-074K7L","TopLayer","YAGO-RC0805_M","49.8950","23.6220","0","General Puprose Chip Resistor, 4700 Ohm +/- 1%, 0.125 W, -55 to 155 degC, 2-Pin SMD, RoHS, Tape and Reel"
+"R2","RC0805FR-075K1L","TopLayer","RESC2012X60N","7.3660","10.4140","0",""
+"R1","RC0805FR-075K1L","TopLayer","RESC2012X60N","7.2390","12.7000","0",""
+"J3","826648-4","TopLayer","TE_826648-4","11.5570","33.7820","0","Connector Header Through Hole 4 position 0.100 (2.54mm)"
+"J2","MTSW-110-13-T-S-1000","TopLayer","SAMTEC_MTSW-110-13-T-S-1000","57.9120","18.7960","90",""
+"J1","USB4105-GF-A","TopLayer","GCT_USB4105-GF-A","5.1054","5.2525","0",""
+"D3","LTST-C191KRKT","TopLayer","FP-LTST-C191KRKT-MFG","35.1910","3.9370","0",""
+"D2","LTST-C191KRKT","TopLayer","FP-LTST-C191KRKT-MFG","33.0320","8.6360","0",""
+"D1","LTST-C191KRKT","TopLayer","FP-LTST-C191KRKT-MFG","21.4630","31.2420","0",""
+"C16","CERAMIC-22PF-50V-5%-NPO(0805)","TopLayer","C0805","25.2730","16.0020","0","22 pF ±5% 50V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"
+"C15","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","49.4390","5.9690","0","CAP CER 0.1UF 50V X7R 0805"
+"C14","CERAMIC-22PF-50V-5%-NPO(0805)","TopLayer","C0805","28.1940","15.4940","0","22 pF ±5% 50V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"
+"C13","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","51.9790","16.5100","0","CAP CER 0.1UF 50V X7R 0805"
+"C12","GRM21BR61A105KA01L","TopLayer","CAPC2012X135N","25.9740","9.3980","0","SMD Capacitor X5R(EIA) with Capacitance: 1.0uF Tol. 10%. Rated Voltage: 10Vdc"
+"C11","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","46.3550","33.9090","0","CAP CER 0.1UF 50V X7R 0805"
+"C10","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","40.7670","27.4320","0","CAP CER 0.1UF 50V X7R 0805"
+"C9","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","39.4970","8.8900","0","CAP CER 0.1UF 50V X7R 0805"
+"C8","GRM21BR61A105KA01L","TopLayer","CAPC2012X135N","15.1130","7.1120","0","SMD Capacitor X5R(EIA) with Capacitance: 1.0uF Tol. 10%. Rated Voltage: 10Vdc"
+"C7","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","35.8140","27.5590","0","CAP CER 0.1UF 50V X7R 0805"
+"C6","CC0805KKX5R7BB106","TopLayer","CAPC2012X70","4.1910","25.5270","0","10 µF ±10% 16V Ceramic Capacitor X5R 0805 (2012 Metric)"
+"C5","CERAMIC-22PF-50V-5%-NPO(0805)","TopLayer","C0805","20.7010","6.4770","0","22 pF ±5% 50V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"
+"C4","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","19.4310","21.9710","0","CAP CER 0.1UF 50V X7R 0805"
+"C3","CC0805KRX7R9BB104","TopLayer","FP-CC0805-0_85-MFG","43.9420","6.0960","0","CAP CER 0.1UF 50V X7R 0805"
+"C2","CC0805KKX5R7BB106","TopLayer","CAPC2012X70","4.3790","14.9860","0","10 µF ±10% 16V Ceramic Capacitor X5R 0805 (2012 Metric)"
+"C1","CERAMIC-22PF-50V-5%-NPO(0805)","TopLayer","C0805","14.0970","22.8600","0","22 pF ±5% 50V Ceramic Capacitor C0G, NP0 0805 (2012 Metric)"
