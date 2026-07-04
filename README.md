@@ -67,7 +67,10 @@ Routing note: the Situs auto-router reported "135/135 100%", but DRC revealed
 
 ## Bring-up results
 
-Every peripheral was validated step by step over SWD (ST-Link V2 + OpenOCD):
+![5 assembled boards from JLCPCB](images/pedido_jlcpcb.jpeg)
+
+Five assembled boards, straight from the fab. Every peripheral was validated
+step by step over SWD (ST-Link V2 + OpenOCD):
 
 | Step | Result |
 |---|---|

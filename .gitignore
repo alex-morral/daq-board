@@ -20,7 +20,6 @@ Thumbs.db
 # facturas, direcciones, VAT, datos de la empresa
 private/
 *.invoice.*
-images/pedido_jlcpcb.jpeg
 
 # Altium: keep only the DAQ_Board project (source + outputs), not the
 # app's install examples, logs, or heavy backup snapshots
