@@ -30,14 +30,22 @@ void *memset(void *s, int c, unsigned int n) {
     return s;
 }
 
-// Vector table
+// Cortex-M3 core vector table (entries 0-15). External peripheral IRQs are
+// omitted because this firmware enables no interrupts; all faults trap in
+// Default_Handler instead of jumping to garbage.
 __attribute__((section(".isr_vector")))
 void (*const vectors[])(void) = {
-    (void (*)(void))(&_estack),
-    Reset_Handler,
-    Default_Handler,  // NMI
-    Default_Handler,  // HardFault
-    Default_Handler,  // MemManage
-    Default_Handler,  // BusFault
-    Default_Handler,  // UsageFault
+    (void (*)(void))(&_estack),  //  0 Initial stack pointer
+    Reset_Handler,               //  1 Reset
+    Default_Handler,             //  2 NMI
+    Default_Handler,             //  3 HardFault
+    Default_Handler,             //  4 MemManage
+    Default_Handler,             //  5 BusFault
+    Default_Handler,             //  6 UsageFault
+    0, 0, 0, 0,                  //  7-10 Reserved
+    Default_Handler,             // 11 SVCall
+    Default_Handler,             // 12 DebugMonitor
+    0,                           // 13 Reserved
+    Default_Handler,             // 14 PendSV
+    Default_Handler,             // 15 SysTick
 };

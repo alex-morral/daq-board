@@ -27,7 +27,9 @@ $cflags = @(
     "-o", $elf
 )
 
-& $gccExe @cflags @sources
+# -lgcc provides compiler runtime helpers (e.g. 64-bit divide) that -nostdlib
+# otherwise drops. Must come after the source/object files.
+& $gccExe @cflags @sources "-lgcc"
 if ($LASTEXITCODE -ne 0) { throw "Build failed" }
 
 $sizeExe = $gccExe -replace "gcc\.exe$","size.exe"

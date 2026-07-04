@@ -16,7 +16,8 @@ SOURCES = $(wildcard $(SRC_DIR)/*.c)
 CFLAGS  = -mcpu=cortex-m3 -mthumb -Os -Wall -Wextra
 CFLAGS += -ffunction-sections -fdata-sections -nostdlib
 CFLAGS += -I$(SRC_DIR)
-LDFLAGS = -T stm32f103c8.ld -Wl,--gc-sections -nostdlib
+# -lgcc: compiler runtime helpers (64-bit divide etc.) dropped by -nostdlib
+LDFLAGS = -T stm32f103c8.ld -Wl,--gc-sections -nostdlib -lgcc
 
 ELF = $(BUILD)/$(TARGET).elf
 BIN = $(BUILD)/$(TARGET).bin

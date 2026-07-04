@@ -8,280 +8,144 @@
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
   :root {
-    --bg: #0a0f16;
-    --panel: #111823;
-    --panel-2: #16202d;
-    --panel-3: #1d2937;
-    --border: #223142;
-    --border-hi: #2f435a;
-    --text: #dbe4ee;
-    --text-mid: #8595a8;
-    --text-dim: #5a6b7e;
-    --ch0: #ff7a45;
-    --ch1: #22e0a1;
-    --ch2: #5b9dff;
-    --ch3: #ffcb47;
-    --dac: #b57bff;
-    --temp: #ff5c8a;
-    --danger: #ff4d4d;
-    --success: #22e0a1;
+    --bg: #0b0f15;
+    --bg-2: #0e131b;
+    --panel: #141b25;
+    --panel-2: #1a2330;
+    --panel-3: #212d3d;
+    --line: #26313f;
+    --line-2: #33445a;
+    --ink: #e7edf5;
+    --ink-mid: #93a2b6;
+    --ink-dim: #5d6d82;
+    --ch0: #ff8552;
+    --ch1: #2ee6ac;
+    --ch2: #5aa2ff;
+    --ch3: #ffd15c;
+    --dac: #c08bff;
+    --temp: #ff6b9d;
+    --ok: #2ee6ac;
+    --err: #ff5470;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    background: var(--bg);
-    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(90,162,255,0.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(46,230,172,0.05), transparent 60%),
+      var(--bg);
+    color: var(--ink);
     font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 14px;
-    display: flex; flex-direction: column;
-    overflow: hidden;
+    display: flex; flex-direction: column; overflow: hidden;
   }
   .mono { font-family: 'IBM Plex Mono', monospace; }
 
-  /* ============ HEADER ============ */
+  /* Header */
   header {
-    height: 56px; flex-shrink: 0;
-    padding: 0 1.5rem;
+    height: 60px; flex-shrink: 0; padding: 0 1.75rem;
     display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, var(--panel) 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
   }
-  .brand { display: flex; align-items: center; gap: 0.85rem; }
+  .brand { display: flex; align-items: center; gap: 0.9rem; }
   .brand-mark {
-    width: 38px; height: 38px; border-radius: 8px;
-    border: 1.5px solid var(--ch1);
-    display: grid; place-items: center;
-    font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 0.7rem;
-    color: var(--ch1); letter-spacing: 0.5px;
-    box-shadow: 0 0 20px rgba(34,224,161,0.12), inset 0 0 12px rgba(34,224,161,0.05);
+    width: 40px; height: 40px; border-radius: 10px;
+    border: 1.5px solid var(--ch1); display: grid; place-items: center;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 0.72rem;
+    color: var(--ch1); box-shadow: 0 0 24px rgba(46,230,172,0.15), inset 0 0 14px rgba(46,230,172,0.06);
   }
-  .brand-title { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.2px; }
-  .brand-sub {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
-    color: var(--text-dim); letter-spacing: 1px;
-  }
-  .header-controls { display: flex; align-items: center; gap: 0.6rem; }
-
-  .ctrl-btn {
+  .brand h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.2px; }
+  .brand span { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--ink-dim); letter-spacing: 1px; }
+  .hctrl { display: flex; align-items: center; gap: 0.6rem; }
+  .btn {
     font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; font-weight: 500;
-    padding: 0.5rem 0.9rem; border-radius: 7px;
-    border: 1px solid var(--border-hi); background: var(--panel-2);
-    color: var(--text-mid); cursor: pointer; transition: all 0.15s;
-    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.55rem 0.95rem; border-radius: 9px; border: 1px solid var(--line-2);
+    background: var(--panel-2); color: var(--ink-mid); cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: center; gap: 0.45rem;
   }
-  .ctrl-btn:hover { border-color: var(--ch1); color: var(--text); background: var(--panel-3); }
-  .ctrl-btn.rec-active { border-color: var(--danger); color: var(--danger); background: rgba(255,77,77,0.1); }
-  .ctrl-btn.export-ready { border-color: var(--success); color: var(--success); }
-
+  .btn:hover { border-color: var(--ch1); color: var(--ink); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.rec { border-color: var(--err); color: var(--err); background: rgba(255,84,112,0.12); }
+  .btn.ready { border-color: var(--ok); color: var(--ok); }
   .conn {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.5rem 0.9rem; border-radius: 7px;
-    border: 1px solid var(--border-hi); background: var(--panel-2);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--text-mid);
+    display: flex; align-items: center; gap: 0.55rem; padding: 0.55rem 0.95rem;
+    border-radius: 9px; border: 1px solid var(--line-2); background: var(--panel-2);
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--ink-mid);
   }
-  .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
-  .conn-dot.on { background: var(--success); box-shadow: 0 0 8px var(--success); animation: blink 2s infinite; }
-  @keyframes blink { 50% { opacity: 0.35; } }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--err); transition: background 0.3s; }
+  .dot.on { background: var(--ok); box-shadow: 0 0 9px var(--ok); animation: blink 2s infinite; }
+  @keyframes blink { 50% { opacity: 0.4; } }
 
-  /* ============ MEASUREMENT TILES ============ */
+  /* Tiles */
   .tiles {
-    flex-shrink: 0;
-    display: grid; grid-template-columns: repeat(6, 1fr);
-    gap: 1px; background: var(--border);
-    border-bottom: 1px solid var(--border);
+    flex-shrink: 0; display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: 12px; padding: 14px 1.75rem;
   }
   .tile {
-    background: var(--panel); padding: 0.85rem 1.1rem;
+    background: linear-gradient(160deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--line); border-radius: 14px; padding: 0.95rem 1.15rem;
     position: relative; overflow: hidden;
   }
-  .tile::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: var(--accent);
+  .tile::after {
+    content: ''; position: absolute; inset: 0 auto 0 0; width: 3px;
+    background: var(--accent); opacity: 0.9;
   }
-  .tile-label {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-mid);
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 0.35rem;
-  }
-  .tile-addr {
-    font-size: 0.55rem; color: var(--text-dim);
-    padding: 0.1rem 0.35rem; border-radius: 3px; background: var(--panel-3);
-  }
-  .tile-value {
-    font-family: 'IBM Plex Mono', monospace; font-weight: 600;
-    font-size: 1.9rem; line-height: 1; color: var(--accent);
-    letter-spacing: -1px;
-    font-variant-numeric: tabular-nums;
-  }
-  .tile-value .u { font-size: 0.75rem; font-weight: 400; color: var(--text-mid); margin-left: 0.25rem; letter-spacing: 0; }
-  .tile-stats {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem;
-    color: var(--text-dim); margin-top: 0.45rem; letter-spacing: 0.3px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  .tile-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .tile-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.64rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-mid); }
+  .tile-addr { font-family: 'IBM Plex Mono', monospace; font-size: 0.56rem; color: var(--ink-dim); padding: 0.12rem 0.4rem; border-radius: 4px; background: var(--panel-3); }
+  .tile-val { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 2rem; line-height: 1; color: var(--accent); letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .tile-val.err { color: var(--err); font-size: 1.3rem; }
+  .tile-val .u { font-size: 0.78rem; font-weight: 400; color: var(--ink-mid); margin-left: 0.25rem; letter-spacing: 0; }
+  .tile-stats { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink-dim); margin-top: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* ============ MAIN ============ */
-  .main {
-    flex: 1; display: grid;
-    grid-template-columns: 1fr 300px;
-    grid-template-rows: 100%;
-    min-height: 0; overflow: hidden;
-  }
-
-  /* Scope */
-  .scope-wrap {
-    display: flex; flex-direction: column; min-height: 0;
-    border-right: 1px solid var(--border);
-  }
-  .scope-bar {
-    height: 40px; flex-shrink: 0;
-    padding: 0 1.1rem;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--border); background: var(--panel);
-  }
-  .scope-title {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
-    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
-  }
-  .scope-legends { display: flex; gap: 0.4rem; }
-  .legend {
-    display: flex; align-items: center; gap: 0.4rem;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; font-weight: 500;
-    color: var(--text); padding: 0.3rem 0.6rem; border-radius: 6px;
-    background: var(--panel-2); border: 1px solid var(--border);
-    cursor: pointer; user-select: none; transition: all 0.12s;
-  }
-  .legend:hover { border-color: var(--border-hi); }
-  .legend.off { opacity: 0.35; }
-  .legend-dot { width: 9px; height: 9px; border-radius: 2px; }
-  .scope {
-    flex: 1; position: relative; background: #070b11; min-height: 0;
-  }
+  /* Main */
+  .main { flex: 1; display: grid; grid-template-columns: 1fr 310px; grid-template-rows: 100%; gap: 14px; padding: 0 1.75rem; min-height: 0; overflow: hidden; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .card-bar { height: 42px; flex-shrink: 0; padding: 0 1.1rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  .card-title { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2px; color: var(--ink-mid); }
+  .legends { display: flex; gap: 0.4rem; }
+  .legend { display: flex; align-items: center; gap: 0.4rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem; font-weight: 500; padding: 0.28rem 0.6rem; border-radius: 7px; background: var(--panel-2); border: 1px solid var(--line); cursor: pointer; user-select: none; transition: all 0.12s; }
+  .legend:hover { border-color: var(--line-2); }
+  .legend.off { opacity: 0.32; }
+  .ldot { width: 9px; height: 9px; border-radius: 3px; }
+  .scope { flex: 1; position: relative; min-height: 0; }
   .scope canvas { width: 100%; height: 100%; display: block; }
-  .scope-readout {
-    position: absolute; bottom: 0.85rem; left: 1rem;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
-    color: var(--text-dim); background: rgba(7,11,17,0.9);
-    padding: 0.4rem 0.7rem; border-radius: 6px; border: 1px solid var(--border);
-    letter-spacing: 0.5px;
-  }
+  .scope-tag { position: absolute; bottom: 12px; left: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 0.64rem; color: var(--ink-dim); background: rgba(11,15,21,0.85); padding: 0.35rem 0.65rem; border-radius: 7px; border: 1px solid var(--line); }
 
-  /* Control rail */
-  .rail {
-    display: flex; flex-direction: column; min-height: 0;
-    overflow-y: auto; background: var(--panel);
-  }
+  /* Rail */
+  .rail { display: flex; flex-direction: column; gap: 14px; min-height: 0; overflow-y: auto; }
   .rail::-webkit-scrollbar { width: 5px; }
-  .rail::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
-  .rail-block { padding: 1.1rem 1.2rem; border-bottom: 1px solid var(--border); }
-  .rail-label {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; font-weight: 500;
-    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
-    margin-bottom: 0.9rem;
-  }
-
-  select.gain {
-    width: 100%; padding: 0.7rem 0.8rem; border-radius: 8px;
-    background: var(--panel-2); border: 1px solid var(--border-hi);
-    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
-    cursor: pointer; outline: none; transition: border-color 0.15s;
-  }
+  .rail::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+  .block { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1.15rem 1.2rem; }
+  .block-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--ink-mid); margin-bottom: 0.95rem; }
+  select.gain { width: 100%; padding: 0.7rem 0.8rem; border-radius: 9px; background: var(--panel-2); border: 1px solid var(--line-2); color: var(--ink); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; cursor: pointer; outline: none; }
   select.gain:focus { border-color: var(--ch2); }
+  .dac-big { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 2.3rem; line-height: 1; color: var(--dac); text-align: center; font-variant-numeric: tabular-nums; }
+  .dac-big .u { font-size: 0.82rem; font-weight: 400; color: var(--ink-mid); }
+  .dac-code { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem; color: var(--ink-dim); margin: 0.2rem 0 1rem; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--dac) var(--fill,50%), var(--panel-3) var(--fill,50%)); outline: none; margin-bottom: 1rem; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--dac); cursor: pointer; box-shadow: 0 0 14px rgba(192,139,255,0.5); border: 3px solid var(--bg); }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; }
+  .preset { padding: 0.5rem 0; border-radius: 8px; text-align: center; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink-mid); cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; transition: all 0.12s; }
+  .preset:hover { border-color: var(--dac); color: var(--dac); }
+  .kv { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; padding: 0.32rem 0; color: var(--ink-mid); }
+  .kv .v { color: var(--ink); }
 
-  .dac-big {
-    font-family: 'IBM Plex Mono', monospace; font-weight: 700;
-    font-size: 2.2rem; line-height: 1; color: var(--dac);
-    text-align: center; margin-bottom: 0.15rem;
-    font-variant-numeric: tabular-nums;
-  }
-  .dac-big .u { font-size: 0.8rem; font-weight: 400; color: var(--text-mid); }
-  .dac-raw {
-    text-align: center; font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.65rem; color: var(--text-dim); margin-bottom: 1rem;
-  }
-  input[type="range"] {
-    -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
-    background: linear-gradient(90deg, var(--dac) 0%, var(--dac) var(--fill,50%), var(--panel-3) var(--fill,50%));
-    outline: none; margin-bottom: 0.9rem;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
-    background: var(--dac); cursor: pointer;
-    box-shadow: 0 0 12px rgba(181,123,255,0.5); border: 3px solid var(--bg);
-  }
-  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
-  .preset {
-    padding: 0.5rem 0; border-radius: 6px; text-align: center;
-    background: var(--panel-2); border: 1px solid var(--border);
-    color: var(--text-mid); cursor: pointer;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
-    transition: all 0.12s;
-  }
-  .preset:hover { border-color: var(--dac); color: var(--dac); background: var(--panel-3); }
-
-  .info-row {
-    display: flex; justify-content: space-between; align-items: center;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
-    padding: 0.35rem 0; color: var(--text-mid);
-  }
-  .info-row .v { color: var(--text); }
-
-  /* ============ BOTTOM ============ */
-  .bottom {
-    height: 180px; flex-shrink: 0;
-    display: grid; grid-template-columns: 1fr 340px; grid-template-rows: 180px;
-    border-top: 1px solid var(--border); overflow: hidden;
-  }
-  .temp-panel {
-    display: flex; flex-direction: column; min-height: 0; overflow: hidden;
-    border-right: 1px solid var(--border); background: var(--panel);
-  }
-  .temp-bar {
-    height: 34px; flex-shrink: 0; padding: 0 1.1rem;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-  }
-  .temp-bar-title {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
-    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
-  }
-  .live-tag {
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--temp);
-    display: flex; align-items: center; gap: 0.35rem;
-  }
-  .live-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--temp); animation: blink 1.5s infinite; }
-  .temp-canvas-wrap { flex: 1; padding: 0.5rem 0.75rem; min-height: 0; }
-  .temp-canvas-wrap canvas { width: 100%; height: 100%; }
-
-  .log-panel { display: flex; flex-direction: column; background: var(--panel); min-height: 0; overflow: hidden; }
-  .log-bar {
-    height: 34px; flex-shrink: 0; padding: 0 1.1rem;
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
-    text-transform: uppercase; letter-spacing: 2px; color: var(--text-mid);
-  }
-  .log-body {
-    flex: 1; overflow-y: auto; padding: 0.5rem 1.1rem; min-height: 0;
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; line-height: 1.75;
-  }
-  .log-body::-webkit-scrollbar { width: 4px; }
-  .log-body::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+  /* Bottom */
+  .bottom { flex-shrink: 0; height: 172px; display: grid; grid-template-columns: 1fr 340px; grid-template-rows: 172px; gap: 14px; padding: 14px 1.75rem; overflow: hidden; }
+  .card.temp .card-bar .live { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--temp); display: flex; align-items: center; gap: 0.35rem; }
+  .card.temp .live::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--temp); animation: blink 1.5s infinite; }
+  .temp-wrap { flex: 1; padding: 0.5rem 0.6rem; min-height: 0; }
+  .temp-wrap canvas { width: 100%; height: 100%; }
+  .log { flex: 1; overflow-y: auto; padding: 0.5rem 1.1rem; min-height: 0; font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; line-height: 1.7; }
+  .log::-webkit-scrollbar { width: 4px; }
+  .log::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 2px; }
   .log-line { display: flex; gap: 0.7rem; white-space: nowrap; }
-  .log-time { color: var(--text-dim); }
+  .log-t { color: var(--ink-dim); }
 
-  /* ============ FOOTER ============ */
-  .footer {
-    height: 30px; flex-shrink: 0; padding: 0 1.5rem;
-    display: flex; align-items: center; justify-content: space-between;
-    border-top: 1px solid var(--border); background: var(--panel);
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem;
-    color: var(--text-dim); letter-spacing: 0.5px;
-  }
-  .footer-right { display: flex; gap: 1.5rem; }
-  .footer-right .hl { color: var(--text-mid); }
+  .foot { height: 30px; flex-shrink: 0; padding: 0 1.75rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--ink-dim); }
+  .foot .r { display: flex; gap: 1.5rem; }
+  .foot .hl { color: var(--ink-mid); }
 </style>
 </head>
 <body>
@@ -289,77 +153,42 @@
 <header>
   <div class="brand">
     <div class="brand-mark">DAQ</div>
-    <div>
-      <div class="brand-title">DAQ Board</div>
-      <div class="brand-sub">STM32F103 · Data Acquisition</div>
-    </div>
+    <div><h1>DAQ Board</h1><span>STM32F103 · Data Acquisition</span></div>
   </div>
-  <div class="header-controls">
-    <button class="ctrl-btn" id="btnRecord">● REC</button>
-    <button class="ctrl-btn" id="btnExport">↓ EXPORT CSV</button>
-    <div class="conn">
-      <div class="conn-dot" id="connDot"></div>
-      <span id="connText">DISCONNECTED</span>
-    </div>
+  <div class="hctrl">
+    <button class="btn" id="btnRec">● REC</button>
+    <button class="btn" id="btnCsv" disabled>↓ CSV</button>
+    <div class="conn"><div class="dot" id="dot"></div><span id="connText">CONNECTING…</span></div>
   </div>
 </header>
 
-<!-- Measurement tiles -->
 <div class="tiles">
-  <div class="tile" style="--accent:var(--temp)">
-    <div class="tile-label">Temp <span class="tile-addr">0x49</span></div>
-    <div class="tile-value" id="tTemp">--.--<span class="u">°C</span></div>
-    <div class="tile-stats" id="sTemp">—</div>
-  </div>
-  <div class="tile" style="--accent:var(--ch0)">
-    <div class="tile-label">AIN0 <span class="tile-addr">ADS1115</span></div>
-    <div class="tile-value" id="tCh0">-.---<span class="u">V</span></div>
-    <div class="tile-stats" id="sCh0">—</div>
-  </div>
-  <div class="tile" style="--accent:var(--ch1)">
-    <div class="tile-label">AIN1 <span class="tile-addr">ADS1115</span></div>
-    <div class="tile-value" id="tCh1">-.---<span class="u">V</span></div>
-    <div class="tile-stats" id="sCh1">—</div>
-  </div>
-  <div class="tile" style="--accent:var(--ch2)">
-    <div class="tile-label">AIN2 <span class="tile-addr">ADS1115</span></div>
-    <div class="tile-value" id="tCh2">-.---<span class="u">V</span></div>
-    <div class="tile-stats" id="sCh2">—</div>
-  </div>
-  <div class="tile" style="--accent:var(--ch3)">
-    <div class="tile-label">AIN3 <span class="tile-addr">ADS1115</span></div>
-    <div class="tile-value" id="tCh3">-.---<span class="u">V</span></div>
-    <div class="tile-stats" id="sCh3">—</div>
-  </div>
-  <div class="tile" style="--accent:var(--dac)">
-    <div class="tile-label">DAC Out <span class="tile-addr">0x60</span></div>
-    <div class="tile-value" id="tDac">-.---<span class="u">V</span></div>
-    <div class="tile-stats" id="sDac">MCP4725 · 12-bit</div>
-  </div>
+  <div class="tile" style="--accent:var(--temp)"><div class="tile-top"><span class="tile-label">Temp</span><span class="tile-addr">0x49</span></div><div class="tile-val" id="vTemp">--.--<span class="u">°C</span></div><div class="tile-stats" id="sTemp">—</div></div>
+  <div class="tile" style="--accent:var(--ch0)"><div class="tile-top"><span class="tile-label">AIN0</span><span class="tile-addr">ADS1115</span></div><div class="tile-val" id="vCh0">-.---<span class="u">V</span></div><div class="tile-stats" id="sCh0">—</div></div>
+  <div class="tile" style="--accent:var(--ch1)"><div class="tile-top"><span class="tile-label">AIN1</span><span class="tile-addr">ADS1115</span></div><div class="tile-val" id="vCh1">-.---<span class="u">V</span></div><div class="tile-stats" id="sCh1">—</div></div>
+  <div class="tile" style="--accent:var(--ch2)"><div class="tile-top"><span class="tile-label">AIN2</span><span class="tile-addr">ADS1115</span></div><div class="tile-val" id="vCh2">-.---<span class="u">V</span></div><div class="tile-stats" id="sCh2">—</div></div>
+  <div class="tile" style="--accent:var(--ch3)"><div class="tile-top"><span class="tile-label">AIN3</span><span class="tile-addr">ADS1115</span></div><div class="tile-val" id="vCh3">-.---<span class="u">V</span></div><div class="tile-stats" id="sCh3">—</div></div>
+  <div class="tile" style="--accent:var(--dac)"><div class="tile-top"><span class="tile-label">DAC</span><span class="tile-addr">0x60</span></div><div class="tile-val" id="vDac">-.---<span class="u">V</span></div><div class="tile-stats">MCP4725 · 12-bit</div></div>
 </div>
 
-<!-- Main -->
 <div class="main">
-  <div class="scope-wrap">
-    <div class="scope-bar">
-      <span class="scope-title">Analog Inputs · Oscilloscope</span>
-      <div class="scope-legends">
-        <div class="legend" data-ch="0"><span class="legend-dot" style="background:var(--ch0)"></span>AIN0</div>
-        <div class="legend" data-ch="1"><span class="legend-dot" style="background:var(--ch1)"></span>AIN1</div>
-        <div class="legend" data-ch="2"><span class="legend-dot" style="background:var(--ch2)"></span>AIN2</div>
-        <div class="legend" data-ch="3"><span class="legend-dot" style="background:var(--ch3)"></span>AIN3</div>
+  <div class="card">
+    <div class="card-bar">
+      <span class="card-title">Analog Inputs</span>
+      <div class="legends">
+        <div class="legend" data-ch="0"><span class="ldot" style="background:var(--ch0)"></span>AIN0</div>
+        <div class="legend" data-ch="1"><span class="ldot" style="background:var(--ch1)"></span>AIN1</div>
+        <div class="legend" data-ch="2"><span class="ldot" style="background:var(--ch2)"></span>AIN2</div>
+        <div class="legend" data-ch="3"><span class="ldot" style="background:var(--ch3)"></span>AIN3</div>
       </div>
     </div>
-    <div class="scope">
-      <canvas id="scopeCanvas"></canvas>
-      <div class="scope-readout" id="scopeReadout">Waiting for data…</div>
-    </div>
+    <div class="scope"><canvas id="scope"></canvas><div class="scope-tag" id="scopeTag">Waiting for data…</div></div>
   </div>
 
   <div class="rail">
-    <div class="rail-block">
-      <div class="rail-label">ADC Input Range (PGA)</div>
-      <select class="gain" id="pgaSelect">
+    <div class="block">
+      <div class="block-label">ADC Range (PGA)</div>
+      <select class="gain" id="pga">
         <option value="0">±6.144 V — 187.5 µV/bit</option>
         <option value="1" selected>±4.096 V — 125 µV/bit</option>
         <option value="2">±2.048 V — 62.5 µV/bit</option>
@@ -368,237 +197,174 @@
         <option value="5">±0.256 V — 7.8 µV/bit</option>
       </select>
     </div>
-
-    <div class="rail-block">
-      <div class="rail-label">DAC Output Control</div>
+    <div class="block">
+      <div class="block-label">DAC Output</div>
       <div class="dac-big" id="dacBig">1.650<span class="u">V</span></div>
-      <div class="dac-raw" id="dacRaw">code 2048 / 4095</div>
-      <input type="range" id="dacSlider" min="0" max="4095" value="2048" step="1">
+      <div class="dac-code" id="dacCode">code 2048 / 4095</div>
+      <input type="range" id="dac" min="0" max="4095" value="2048">
       <div class="presets">
-        <div class="preset" data-val="0">0 V</div>
-        <div class="preset" data-val="410">0.33 V</div>
-        <div class="preset" data-val="1024">0.82 V</div>
-        <div class="preset" data-val="2048">1.65 V</div>
-        <div class="preset" data-val="3072">2.48 V</div>
-        <div class="preset" data-val="4095">3.30 V</div>
+        <div class="preset" data-v="0">0 V</div>
+        <div class="preset" data-v="410">0.33 V</div>
+        <div class="preset" data-v="1024">0.82 V</div>
+        <div class="preset" data-v="2048">1.65 V</div>
+        <div class="preset" data-v="3072">2.48 V</div>
+        <div class="preset" data-v="4095">3.30 V</div>
       </div>
     </div>
-
-    <div class="rail-block">
-      <div class="rail-label">Peripherals</div>
-      <div class="info-row"><span>MCU</span><span class="v">STM32F103C8T6</span></div>
-      <div class="info-row"><span>ADC</span><span class="v">ADS1115 · 16-bit</span></div>
-      <div class="info-row"><span>Sensor</span><span class="v">TMP117 ±0.1°C</span></div>
-      <div class="info-row"><span>Flash</span><span class="v">W25Q32 · 4 MB</span></div>
-      <div class="info-row"><span>JEDEC ID</span><span class="v" style="color:var(--ch1)">EF 40 16</span></div>
+    <div class="block">
+      <div class="block-label">System</div>
+      <div class="kv"><span>MCU</span><span class="v">STM32F103C8T6</span></div>
+      <div class="kv"><span>ADC</span><span class="v">ADS1115 · 16-bit</span></div>
+      <div class="kv"><span>Sensor</span><span class="v">TMP117 ±0.1°C</span></div>
+      <div class="kv"><span>Flash</span><span class="v">W25Q32 · 4 MB</span></div>
+      <div class="kv"><span>Link</span><span class="v" id="linkPort">—</span></div>
     </div>
   </div>
 </div>
 
-<!-- Bottom -->
 <div class="bottom">
-  <div class="temp-panel">
-    <div class="temp-bar">
-      <span class="temp-bar-title">Temperature History · TMP117</span>
-      <span class="live-tag">LIVE</span>
-    </div>
-    <div class="temp-canvas-wrap"><canvas id="tempCanvas"></canvas></div>
+  <div class="card temp">
+    <div class="card-bar"><span class="card-title">Temperature History</span><span class="live">LIVE</span></div>
+    <div class="temp-wrap"><canvas id="temp"></canvas></div>
   </div>
-  <div class="log-panel">
-    <div class="log-bar"><span>Data Stream</span><span id="sampleCount">0</span></div>
-    <div class="log-body" id="logBody"></div>
+  <div class="card">
+    <div class="card-bar"><span class="card-title">Data Stream</span><span class="card-title" id="count">0</span></div>
+    <div class="log" id="log"></div>
   </div>
 </div>
 
-<div class="footer">
+<div class="foot">
   <span>Alex Morral · Telecom Engineering Portfolio</span>
-  <div class="footer-right">
-    <span>SAMPLE RATE <span class="hl" id="sps">0 S/s</span></span>
-    <span id="clock">--:--:--</span>
-  </div>
+  <div class="r"><span>RATE <span class="hl" id="rate">0.0 S/s</span></span><span id="clock">--:--:--</span></div>
 </div>
 
 <script>
-const MAX_POINTS = 150;
-const CH_COLORS = ['#ff7a45', '#22e0a1', '#5b9dff', '#ffcb47'];
-const CH_GLOWS = ['rgba(255,122,69,0.10)', 'rgba(34,224,161,0.10)', 'rgba(91,157,255,0.10)', 'rgba(255,203,71,0.10)'];
-const PGA_LABELS = ['±6.144V', '±4.096V', '±2.048V', '±1.024V', '±0.512V', '±0.256V'];
-const PGA_MAX = [6.144, 4.096, 2.048, 1.024, 0.512, 0.256];
+const N = 150;
+const COL = ['#ff8552','#2ee6ac','#5aa2ff','#ffd15c'];
+const GLOW = ['rgba(255,133,82,.10)','rgba(46,230,172,.10)','rgba(90,162,255,.10)','rgba(255,209,92,.10)'];
+const PGA_L = ['±6.144V','±4.096V','±2.048V','±1.024V','±0.512V','±0.256V'];
+const PGA_M = [6.144,4.096,2.048,1.024,0.512,0.256];
 
-let chData = [[], [], [], []];
-let tempData = [];
-let chVisible = [true, true, true, true];
-let sampleCount = 0, spsCounter = 0, lastSps = Date.now();
-let recording = false, recorded = [];
+let chD = [[],[],[],[]], tD = [], vis = [true,true,true,true];
+let count = 0, spsC = 0, lastSps = Date.now(), rec = false, recData = [];
+let S = { t:{mn:1/0,mx:-1/0,s:0,n:0}, c:[0,1,2,3].map(()=>({mn:1/0,mx:-1/0,s:0,n:0})) };
+const upd = (o,v)=>{o.mn=Math.min(o.mn,v);o.mx=Math.max(o.mx,v);o.s+=v;o.n++;};
+const fmt = (o,d)=> o.n? `min ${o.mn.toFixed(d)}  max ${o.mx.toFixed(d)}  avg ${(o.s/o.n).toFixed(d)}` : '—';
 
-let st = {
-  temp: { min: Infinity, max: -Infinity, sum: 0, n: 0 },
-  ch: [0,1,2,3].map(() => ({ min: Infinity, max: -Infinity, sum: 0, n: 0 }))
-};
-function upd(o, v) { o.min = Math.min(o.min, v); o.max = Math.max(o.max, v); o.sum += v; o.n++; }
-function fmt(o, u, d) { return o.n ? `min ${o.min.toFixed(d)}  max ${o.max.toFixed(d)}  avg ${(o.sum/o.n).toFixed(d)}${u}` : '—'; }
-
-function drawScope() {
-  const cv = document.getElementById('scopeCanvas'), ctx = cv.getContext('2d');
-  const dpr = window.devicePixelRatio || 1, r = cv.getBoundingClientRect();
+function line(cv, series, color, glow, yMin, yMax, unit, xdiv) {
+  const ctx = cv.getContext('2d'), dpr = devicePixelRatio||1, r = cv.getBoundingClientRect();
   cv.width = r.width*dpr; cv.height = r.height*dpr; ctx.scale(dpr,dpr);
   const w = r.width, h = r.height; ctx.clearRect(0,0,w,h);
-
-  const pad = { t: 18, b: 24, l: 60, r: 18 };
-  const cw = w-pad.l-pad.r, ch = h-pad.t-pad.b;
-  const pga = parseInt(document.getElementById('pgaSelect').value);
-  const yMax = PGA_MAX[pga], yMin = -yMax, yR = yMax-yMin;
-
-  const xp = i => pad.l + (i/(MAX_POINTS-1))*cw;
-  const yp = v => pad.t + ch - ((v-yMin)/yR)*ch;
-
-  // grid
-  ctx.font = '11px "IBM Plex Mono", monospace';
-  for (let i=0;i<=8;i++){
-    const gy = pad.t + (ch/8)*i;
-    ctx.strokeStyle = 'rgba(34,49,66,0.5)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(w-pad.r,gy); ctx.stroke();
-    ctx.fillStyle='#5a6b7e'; ctx.textAlign='right';
-    ctx.fillText((yMax-(yR/8)*i).toFixed(2)+'V', pad.l-8, gy+4);
+  const pad = {t:14,b:20,l:52,r:14}, cw = w-pad.l-pad.r, ch = h-pad.t-pad.b;
+  const yR = (yMax-yMin)||1;
+  const xp = i => pad.l + (i/(N-1))*cw, yp = v => pad.t+ch-((v-yMin)/yR)*ch;
+  ctx.font = '10.5px "IBM Plex Mono", monospace';
+  const rows = 4;
+  for (let i=0;i<=rows;i++){ const gy=pad.t+(ch/rows)*i;
+    ctx.strokeStyle='rgba(38,49,63,.7)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(w-pad.r,gy); ctx.stroke();
+    ctx.fillStyle='#5d6d82'; ctx.textAlign='right'; ctx.fillText((yMax-(yR/rows)*i).toFixed(unit==='V'?2:1)+unit, pad.l-7, gy+3);
   }
-  for (let i=0;i<=8;i++){
-    const gx = pad.l + (cw/8)*i;
-    ctx.strokeStyle='rgba(34,49,66,0.4)';
-    ctx.beginPath(); ctx.moveTo(gx,pad.t); ctx.lineTo(gx,h-pad.b); ctx.stroke();
-  }
-  // zero line
-  ctx.strokeStyle='rgba(120,140,160,0.35)'; ctx.setLineDash([5,5]);
-  const zy=yp(0); ctx.beginPath(); ctx.moveTo(pad.l,zy); ctx.lineTo(w-pad.r,zy); ctx.stroke();
-  ctx.setLineDash([]);
-
-  for (let c=0;c<4;c++){
-    if(!chVisible[c] || chData[c].length<2) continue;
-    const d=chData[c], si=MAX_POINTS-d.length;
-    const g=ctx.createLinearGradient(0,pad.t,0,h-pad.b);
-    g.addColorStop(0,CH_GLOWS[c]); g.addColorStop(1,'transparent');
-    ctx.beginPath(); ctx.moveTo(xp(si),yp(d[0]));
-    for(let i=1;i<d.length;i++) ctx.lineTo(xp(si+i),yp(d[i]));
-    ctx.lineTo(xp(si+d.length-1),h-pad.b); ctx.lineTo(xp(si),h-pad.b);
-    ctx.closePath(); ctx.fillStyle=g; ctx.fill();
-    ctx.beginPath(); ctx.moveTo(xp(si),yp(d[0]));
-    for(let i=1;i<d.length;i++) ctx.lineTo(xp(si+i),yp(d[i]));
-    ctx.strokeStyle=CH_COLORS[c]; ctx.lineWidth=1.8; ctx.lineJoin='round'; ctx.stroke();
+  if (xdiv) for (let i=0;i<=xdiv;i++){ const gx=pad.l+(cw/xdiv)*i; ctx.strokeStyle='rgba(38,49,63,.5)'; ctx.beginPath(); ctx.moveTo(gx,pad.t); ctx.lineTo(gx,h-pad.b); ctx.stroke(); }
+  if (yMin<0 && yMax>0){ ctx.strokeStyle='rgba(120,140,160,.35)'; ctx.setLineDash([5,5]); const zy=yp(0); ctx.beginPath(); ctx.moveTo(pad.l,zy); ctx.lineTo(w-pad.r,zy); ctx.stroke(); ctx.setLineDash([]); }
+  series.forEach(s=>{
+    if (!s.on || s.data.length<2) return;
+    const d=s.data, si=N-d.length;
+    const g=ctx.createLinearGradient(0,pad.t,0,h-pad.b); g.addColorStop(0,s.glow); g.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.moveTo(xp(si),yp(d[0])); for(let i=1;i<d.length;i++) ctx.lineTo(xp(si+i),yp(d[i]));
+    ctx.lineTo(xp(si+d.length-1),h-pad.b); ctx.lineTo(xp(si),h-pad.b); ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(xp(si),yp(d[0])); for(let i=1;i<d.length;i++) ctx.lineTo(xp(si+i),yp(d[i]));
+    ctx.strokeStyle=s.color; ctx.lineWidth=1.8; ctx.lineJoin='round'; ctx.stroke();
     const lx=xp(si+d.length-1), ly=yp(d[d.length-1]);
-    ctx.beginPath(); ctx.arc(lx,ly,3.5,0,7); ctx.fillStyle=CH_COLORS[c]; ctx.fill();
-    ctx.beginPath(); ctx.arc(lx,ly,7,0,7); ctx.fillStyle=CH_GLOWS[c]; ctx.fill();
-  }
-}
-
-function drawTemp() {
-  const cv=document.getElementById('tempCanvas'), ctx=cv.getContext('2d');
-  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
-  cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.scale(dpr,dpr);
-  const w=r.width,h=r.height; ctx.clearRect(0,0,w,h);
-  if(tempData.length<2) return;
-  const pad={t:8,b:18,l:44,r:12}, cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
-  const tMin=st.temp.min-0.4, tMax=st.temp.max+0.4, tR=(tMax-tMin)||1;
-  const xp=i=>pad.l+(i/(MAX_POINTS-1))*cw, yp=v=>pad.t+ch-((v-tMin)/tR)*ch;
-  ctx.font='10px "IBM Plex Mono", monospace';
-  for(let i=0;i<=3;i++){
-    const gy=pad.t+(ch/3)*i;
-    ctx.strokeStyle='rgba(34,49,66,0.5)';
-    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(w-pad.r,gy); ctx.stroke();
-    ctx.fillStyle='#5a6b7e'; ctx.textAlign='right';
-    ctx.fillText((tMax-(tR/3)*i).toFixed(1)+'°', pad.l-5, gy+3);
-  }
-  const si=MAX_POINTS-tempData.length;
-  const g=ctx.createLinearGradient(0,pad.t,0,h-pad.b);
-  g.addColorStop(0,'rgba(255,92,138,0.12)'); g.addColorStop(1,'transparent');
-  ctx.beginPath(); ctx.moveTo(xp(si),yp(tempData[0]));
-  for(let i=1;i<tempData.length;i++) ctx.lineTo(xp(si+i),yp(tempData[i]));
-  ctx.lineTo(xp(si+tempData.length-1),h-pad.b); ctx.lineTo(xp(si),h-pad.b);
-  ctx.closePath(); ctx.fillStyle=g; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(xp(si),yp(tempData[0]));
-  for(let i=1;i<tempData.length;i++) ctx.lineTo(xp(si+i),yp(tempData[i]));
-  ctx.strokeStyle='#ff5c8a'; ctx.lineWidth=1.8; ctx.stroke();
-}
-
-document.querySelectorAll('.legend').forEach(el=>{
-  el.addEventListener('click',()=>{
-    const c=parseInt(el.dataset.ch); chVisible[c]=!chVisible[c];
-    el.classList.toggle('off'); drawScope();
+    ctx.beginPath(); ctx.arc(lx,ly,3.5,0,7); ctx.fillStyle=s.color; ctx.fill();
+    ctx.beginPath(); ctx.arc(lx,ly,7.5,0,7); ctx.fillStyle=s.glow; ctx.fill();
   });
-});
-
-const slider=document.getElementById('dacSlider');
-let ws;
-function setDac(val){
-  const v=(val/4095*3.3).toFixed(3);
-  document.getElementById('dacBig').innerHTML=v+'<span class="u">V</span>';
-  document.getElementById('dacRaw').textContent='code '+val+' / 4095';
-  slider.style.setProperty('--fill',(val/4095*100)+'%');
-  if(ws&&ws.readyState===1) ws.send('DAC:'+val);
 }
-slider.addEventListener('input',()=>setDac(parseInt(slider.value)));
-document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{
-  slider.value=b.dataset.val; setDac(parseInt(b.dataset.val));
-}));
-document.getElementById('pgaSelect').addEventListener('change',e=>{
-  if(ws&&ws.readyState===1) ws.send('PGA:'+e.target.value);
-});
+function drawScope(){
+  const pga = +document.getElementById('pga').value, m = PGA_M[pga];
+  line(document.getElementById('scope'),
+    chD.map((d,i)=>({data:d,on:vis[i],color:COL[i],glow:GLOW[i]})), null, null, -m, m, 'V', 8);
+}
+function drawTemp(){
+  if (tD.length<2){ const cv=document.getElementById('temp'); cv.getContext('2d').clearRect(0,0,cv.width,cv.height); return; }
+  line(document.getElementById('temp'), [{data:tD,on:true,color:'#ff6b9d',glow:'rgba(255,107,157,.12)'}],
+    null, null, S.t.mn-0.4, S.t.mx+0.4, '°', 0);
+}
 
-document.getElementById('btnRecord').addEventListener('click',function(){
-  recording=!recording; this.classList.toggle('rec-active');
-  this.textContent=recording?'■ STOP':'● REC';
-  if(!recording&&recorded.length) document.getElementById('btnExport').classList.add('export-ready');
+document.querySelectorAll('.legend').forEach(el=>el.addEventListener('click',()=>{ const c=+el.dataset.ch; vis[c]=!vis[c]; el.classList.toggle('off'); drawScope(); }));
+
+const dac = document.getElementById('dac');
+let ws;
+function setDac(v){ const volt=(v/4095*3.3).toFixed(3);
+  document.getElementById('dacBig').innerHTML=volt+'<span class="u">V</span>';
+  document.getElementById('dacCode').textContent='code '+v+' / 4095';
+  dac.style.setProperty('--fill',(v/4095*100)+'%');
+  if (ws&&ws.readyState===1) ws.send('DAC:'+v);
+}
+dac.addEventListener('input',()=>setDac(+dac.value));
+document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{ dac.value=b.dataset.v; setDac(+b.dataset.v); }));
+document.getElementById('pga').addEventListener('change',e=>{ if(ws&&ws.readyState===1) ws.send('PGA:'+e.target.value); drawScope(); });
+
+document.getElementById('btnRec').addEventListener('click',function(){
+  rec=!rec; this.classList.toggle('rec'); this.textContent=rec?'■ STOP':'● REC';
+  if(!rec && recData.length){ const b=document.getElementById('btnCsv'); b.disabled=false; b.classList.add('ready'); }
 });
-document.getElementById('btnExport').addEventListener('click',()=>{
-  if(!recorded.length) return;
+document.getElementById('btnCsv').addEventListener('click',()=>{
+  if(!recData.length) return;
   let csv='timestamp,temp_C,ain0_V,ain1_V,ain2_V,ain3_V,dac_code,pga\n';
-  recorded.forEach(d=>csv+=`${d.timestamp},${d.temperature},${d.channels.join(',')},${d.dac},${d.pga}\n`);
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  recData.forEach(d=>csv+=`${d.timestamp},${d.temperature??''},${d.channels.map(c=>c??'').join(',')},${d.dac},${d.pga}\n`);
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download=`daq_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`; a.click();
 });
 
+function setConn(on, port){
+  document.getElementById('dot').classList.toggle('on',on);
+  document.getElementById('connText').textContent = on ? (port||'CONNECTED').replace(/^.*\\/,'')+' · 115200' : 'DISCONNECTED';
+  document.getElementById('linkPort').textContent = on ? (port||'serial') : '—';
+}
+function cell(id, val, unit, dec){
+  const el=document.getElementById(id);
+  if (val===null||val===undefined){ el.classList.add('err'); el.textContent='ERR'; }
+  else { el.classList.remove('err'); el.innerHTML=val.toFixed(dec)+'<span class="u">'+unit+'</span>'; }
+}
+
+function onSample(d){
+  count++; spsC++;
+  cell('vTemp', d.temperature, '°C', 2);
+  if (d.temperature!==null){ upd(S.t,d.temperature); document.getElementById('sTemp').textContent=fmt(S.t,2); tD.push(d.temperature); if(tD.length>N) tD.shift(); }
+  for (let i=0;i<4;i++){
+    cell('vCh'+i, d.channels[i], 'V', 3);
+    if (d.channels[i]!==null){ upd(S.c[i],d.channels[i]); document.getElementById('sCh'+i).textContent=fmt(S.c[i],3); chD[i].push(d.channels[i]); }
+    else chD[i].push(chD[i].length?chD[i][chD[i].length-1]:0);
+    if (chD[i].length>N) chD[i].shift();
+  }
+  cell('vDac', d.dac/4095*3.3, 'V', 3);
+  document.getElementById('scopeTag').textContent = `${count} samples · ${PGA_L[d.pga]} · ${chD[0].length}/${N} pts`;
+  drawScope(); drawTemp();
+  const t=new Date(d.timestamp).toLocaleTimeString('es-ES');
+  const log=document.getElementById('log'), ln=document.createElement('div'); ln.className='log-line';
+  const cv=(v)=> v===null?'<span style="color:var(--err)">err</span>':v.toFixed(3);
+  ln.innerHTML=`<span class="log-t">${t}</span><span style="color:var(--temp)">${d.temperature===null?'err':d.temperature.toFixed(2)+'°'}</span>`+
+    d.channels.map((c,i)=>`<span style="color:${COL[i]}">${cv(c)}</span>`).join('');
+  log.appendChild(ln); if(log.children.length>80) log.removeChild(log.firstChild); log.scrollTop=log.scrollHeight;
+  document.getElementById('count').textContent=count;
+  if (rec) recData.push(d);
+}
+
 function connect(){
   ws=new WebSocket(`ws://${location.host}`);
-  ws.onopen=()=>{ document.getElementById('connDot').classList.add('on'); document.getElementById('connText').textContent='COM4 · 9600'; };
-  ws.onclose=()=>{ document.getElementById('connDot').classList.remove('on'); document.getElementById('connText').textContent='DISCONNECTED'; setTimeout(connect,2000); };
-  ws.onmessage=ev=>{
-    const d=JSON.parse(ev.data); sampleCount++; spsCounter++;
-    document.getElementById('tTemp').innerHTML=d.temperature.toFixed(2)+'<span class="u">°C</span>';
-    upd(st.temp,d.temperature); document.getElementById('sTemp').textContent=fmt(st.temp,'',2);
-    tempData.push(d.temperature); if(tempData.length>MAX_POINTS) tempData.shift();
-    for(let i=0;i<4;i++){
-      document.getElementById('tCh'+i).innerHTML=d.channels[i].toFixed(3)+'<span class="u">V</span>';
-      upd(st.ch[i],d.channels[i]); document.getElementById('sCh'+i).textContent=fmt(st.ch[i],'',3);
-      chData[i].push(d.channels[i]); if(chData[i].length>MAX_POINTS) chData[i].shift();
-    }
-    const dv=(d.dac/4095*3.3).toFixed(3);
-    document.getElementById('tDac').innerHTML=dv+'<span class="u">V</span>';
-    document.getElementById('scopeReadout').textContent=`${sampleCount} samples · range ${PGA_LABELS[d.pga]} · ${chData[0].length}/${MAX_POINTS} pts`;
-    drawScope(); drawTemp();
-    const t=new Date(d.timestamp).toLocaleTimeString('es-ES');
-    const lb=document.getElementById('logBody'), ln=document.createElement('div');
-    ln.className='log-line';
-    ln.innerHTML=`<span class="log-time">${t}</span>`+
-      `<span style="color:var(--temp)">${d.temperature.toFixed(2)}°</span>`+
-      d.channels.map((c,i)=>`<span style="color:${CH_COLORS[i]}">${c.toFixed(3)}</span>`).join('');
-    lb.appendChild(ln); if(lb.children.length>80) lb.removeChild(lb.firstChild);
-    lb.scrollTop=lb.scrollHeight;
-    document.getElementById('sampleCount').textContent=sampleCount;
-    if(recording) recorded.push(d);
+  ws.onmessage=ev=>{ const d=JSON.parse(ev.data);
+    if (d.type==='status') setConn(d.connected,d.port);
+    else if (d.type==='sample') onSample(d);
   };
+  ws.onclose=()=>{ setConn(false); setTimeout(connect,1500); };
 }
 connect();
 
-setInterval(()=>{
-  const now=Date.now(), el=(now-lastSps)/1000;
-  document.getElementById('sps').textContent=(spsCounter/el).toFixed(1)+' S/s';
-  spsCounter=0; lastSps=now;
-},2000);
+setInterval(()=>{ const now=Date.now(), el=(now-lastSps)/1000; document.getElementById('rate').textContent=(spsC/el).toFixed(1)+' S/s'; spsC=0; lastSps=now; },2000);
 setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('es-ES'); },1000);
-window.addEventListener('resize',()=>{ drawScope(); drawTemp(); });
-const ro=new ResizeObserver(()=>{ drawScope(); drawTemp(); });
-ro.observe(document.getElementById('scopeCanvas'));
-ro.observe(document.getElementById('tempCanvas'));
-drawScope(); drawTemp();
+addEventListener('resize',()=>{ drawScope(); drawTemp(); });
+new ResizeObserver(()=>{ drawScope(); drawTemp(); }).observe(document.getElementById('scope'));
+new ResizeObserver(()=>drawTemp()).observe(document.getElementById('temp'));
 </script>
 </body>
 </html>

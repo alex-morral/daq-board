@@ -23,8 +23,8 @@ void uart_init(void) {
     GPIOA_CRH &= ~(0xFF << 4);
     GPIOA_CRH |=  (0xB << 4) | (0x4 << 8);
 
-    // 9600 baud @ 8MHz HSI: BRR = 8000000 / 9600 = 833 = 0x341
-    USART1_BRR = 0x341;
+    // 115200 baud @ 8MHz HSI: BRR = 8000000 / 115200 = 69 = 0x45 (0.6% error, OK)
+    USART1_BRR = 0x45;
     // Enable USART, TX, RX
     USART1_CR1 = (1 << 13) | (1 << 3) | (1 << 2);
 }

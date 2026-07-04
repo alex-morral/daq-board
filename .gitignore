@@ -14,7 +14,6 @@ npm-debug.log*
 Thumbs.db
 .DS_Store
 .vscode/
-.claude/
 *.swp
 
 # Datos personales / privados (NO subir)

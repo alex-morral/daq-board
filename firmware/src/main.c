@@ -37,9 +37,13 @@
 static uint16_t dac_value = 2048;
 static uint8_t adc_pga = 1; // 0=6.144V, 1=4.096V, 2=2.048V, 3=1.024V, 4=0.512V, 5=0.256V
 
-// PGA FSR values in mV (for conversion), indexed by pga setting
-// LSB sizes in uV: 187.5, 125, 62.5, 31.25, 15.625, 7.8125
-static const int32_t lsb_uv[] = { 187500, 125000, 62500, 31250, 15625, 7812 };
+// PGA LSB sizes in nanovolts, indexed by pga setting
+// (187.5, 125, 62.5, 31.25, 15.625, 7.8125 uV/bit)
+static const int32_t lsb_nv[] = { 187500, 125000, 62500, 31250, 15625, 7813 };
+
+// Sentinel returned when an ADC / I2C read fails, so the host can tell a real
+// measurement from a bus error instead of showing a plausible-looking voltage.
+#define ADC_ERR  0x7FFFFFFF
 
 static int mcp4725_write(uint16_t value_12bit) {
     uint8_t data[2];
@@ -92,7 +96,11 @@ void delay(volatile uint32_t count) {
     }
 }
 
-static int16_t read_adc_channel(uint8_t channel) {
+// Read one single-ended ADC channel. Returns the signed 16-bit code, or
+// ADC_ERR if any I2C transaction fails. Waits for the conversion by polling
+// the ADS1115 OS bit (config reg bit 15 = 1 when the conversion is done),
+// instead of a blind delay that could return a stale sample.
+static int32_t read_adc_channel(uint8_t channel) {
     // MUX: 100=AIN0, 101=AIN1, 110=AIN2, 111=AIN3 (single-ended vs GND)
     uint16_t mux = (0x04 + channel) << 12;
     uint16_t pga = (uint16_t)adc_pga << 9;
@@ -100,37 +108,40 @@ static int16_t read_adc_channel(uint8_t channel) {
     uint16_t cfg = (1 << 15) | mux | pga | (1 << 8) | (0x4 << 5) | 0x03;
 
     if (i2c_write_reg16(ADS1115_ADDR, ADS1115_CONFIG, cfg) != 0)
-        return -32768;
+        return ADC_ERR;
 
-    delay(20000); // wait for conversion
+    // Poll OS bit until conversion complete (bounded, ~few ms at 128 SPS)
+    uint16_t status = 0;
+    for (int tries = 0; tries < 50; tries++) {
+        if (i2c_read_reg16(ADS1115_ADDR, ADS1115_CONFIG, &status) != 0)
+            return ADC_ERR;
+        if (status & 0x8000) break;   // OS=1 -> ready
+        delay(2000);
+    }
 
     uint16_t raw = 0;
     if (i2c_read_reg16(ADS1115_ADDR, ADS1115_CONV, &raw) != 0)
-        return -32768;
+        return ADC_ERR;
 
-    return (int16_t)raw;
+    return (int16_t)raw;   // sign-extend 16-bit code
 }
 
-static void send_voltage(int16_t raw) {
-    // Convert raw to mV using current PGA setting
-    // voltage_uV = raw * lsb_uv[pga] / 1000 -> mV
-    int32_t mv = ((int32_t)raw * lsb_uv[adc_pga]) / 1000000;
+// Print a channel value as signed volts (e.g. "1.650", "-0.012") or "err".
+static void send_voltage(int32_t raw) {
+    if (raw == ADC_ERR) { uart_send_string("err"); return; }
+
+    // 64-bit multiply avoids int32 overflow (32767 * 187500 > 2^31)
+    int64_t nv = (int64_t)raw * lsb_nv[adc_pga];   // nanovolts
+    int32_t mv = (int32_t)(nv / 1000000);          // millivolts, range -6144..6144
+
+    if (mv < 0) { uart_send_char('-'); mv = -mv; }
     int volts = mv / 1000;
-    int mv_frac = mv % 1000;
-    if (mv < 0 && mv_frac != 0) {
-        volts--;
-        mv_frac = 1000 + mv_frac;
-    }
-    if (mv_frac < 0) mv_frac = -mv_frac;
-    if (volts < 0 && mv >= -999) {
-        uart_send_char('-');
-        volts = -volts;
-    }
+    int frac  = mv % 1000;
     uart_send_int(volts);
     uart_send_char('.');
-    if (mv_frac < 100) uart_send_char('0');
-    if (mv_frac < 10) uart_send_char('0');
-    uart_send_int(mv_frac);
+    if (frac < 100) uart_send_char('0');
+    if (frac < 10)  uart_send_char('0');
+    uart_send_int(frac);
 }
 
 int main(void) {
@@ -173,27 +184,29 @@ int main(void) {
 
         // TMP117
         uint16_t raw = 0;
-        int temp_x100 = 0;
-        if (i2c_read_reg16(TMP117_ADDR, TMP117_TEMP_REG, &raw) == 0) {
-            int16_t raw_signed = (int16_t)raw;
-            temp_x100 = (raw_signed * 100) / 128;
-        }
+        int temp_ok = (i2c_read_reg16(TMP117_ADDR, TMP117_TEMP_REG, &raw) == 0);
+        int temp_x100 = temp_ok ? (((int16_t)raw) * 100) / 128 : 0;
 
         // Read all 4 ADC channels
-        int16_t ch[4];
+        int32_t ch[4];
         for (int i = 0; i < 4; i++) {
             ch[i] = read_adc_channel(i);
         }
 
         // Output format: T:29.60|A0:0.580|A1:0.123|A2:0.456|A3:0.789|D:2048|P:1
+        // A failed read is sent as "err" so the host can distinguish it.
         uart_send_string("T:");
-        int integer = temp_x100 / 100;
-        int decimal = temp_x100 % 100;
-        if (decimal < 0) decimal = -decimal;
-        uart_send_int(integer);
-        uart_send_char('.');
-        if (decimal < 10) uart_send_char('0');
-        uart_send_int(decimal);
+        if (temp_ok) {
+            int integer = temp_x100 / 100;
+            int decimal = temp_x100 % 100;
+            if (decimal < 0) decimal = -decimal;
+            uart_send_int(integer);
+            uart_send_char('.');
+            if (decimal < 10) uart_send_char('0');
+            uart_send_int(decimal);
+        } else {
+            uart_send_string("err");
+        }
 
         for (int i = 0; i < 4; i++) {
             uart_send_string("|A");

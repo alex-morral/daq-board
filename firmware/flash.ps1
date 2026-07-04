@@ -15,7 +15,8 @@ if (-not $ocdExe) {
 }
 if (-not $ocdExe -or -not (Test-Path $ocdExe)) { throw "openocd not found" }
 
-$elf = Join-Path $root "build\daq.elf"
+# OpenOCD's Tcl parser treats backslashes as escapes, so pass a forward-slash path.
+$elf = (Join-Path $root "build\daq.elf") -replace '\\','/'
 & $ocdExe -f "interface/stlink.cfg" -f "target/stm32f1x.cfg" `
     -c "program `"$elf`" verify reset exit"
 if ($LASTEXITCODE -ne 0) { throw "Flash failed" }
