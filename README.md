@@ -123,6 +123,8 @@ A Node.js bridge reads the USB serial stream and pushes it to the browser over
 WebSocket; the front-end renders a test-&-measurement style instrument
 (4-channel scope view, live temperature, DAC control, min/max/avg stats, CSV export).
 
+![Live dashboard](images/dashboard.PNG)
+
 ```bash
 cd dashboard
 npm install
