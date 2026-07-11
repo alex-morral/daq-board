@@ -174,6 +174,20 @@ genuinely different, not just a changing DC level.
 
 ---
 
+## Datalogger (on-board flash)
+
+The board can record standalone: samples are written straight to the **W25Q32
+SPI flash**, then dumped back over USB on demand. Records are 16 bytes
+(index + temperature + four ADC channels), buffered a 256-byte page at a time
+and written sequentially, with 4 KB sectors erased on demand as the log grows.
+
+From the dashboard: **Record → Stop → Download** streams the stored records
+back off the flash and saves them as a CSV. It's the difference between "we can
+talk to the flash" (bring-up) and "the flash does a job" — the chip finally
+earns its place on the board.
+
+---
+
 ## Firmware
 
 Bare-metal, **no HAL** — direct register access so every line is understood.
@@ -220,7 +234,7 @@ Kept as engineering notes rather than a rebuild:
 ## Roadmap
 
 1. ~~**DAC function generator** (sine/triangle/square via HW timer)~~ ✅ done
-2. **Standalone datalogger** to the W25Q32, dumped over USB
+2. ~~**Standalone datalogger** to the W25Q32, dumped over USB~~ ✅ done
 3. **Timer + DMA sampling** with interrupt-driven UART (kHz sample rates)
    *(interrupt-driven UART already added for the generator)*
 4. **PYNQ-Z2 integration** — feed samples to an FPGA FIR filter (ties the 3
