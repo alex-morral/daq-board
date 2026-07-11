@@ -102,6 +102,12 @@ static uint16_t gen_sample(void) {
     }
 }
 
+// Datalogger controls (defined below main's helpers, forward-declared here so
+// the command parser can call them).
+static void log_start(void);
+static void log_stop(void);
+static void log_dump(void);
+
 // A completed command line, filled by the USART1 interrupt and consumed by the
 // main loop. The ISR only buffers text (never touches I2C), so the main loop is
 // free to run the actual command — which does I2C — at a safe point.
@@ -157,6 +163,13 @@ static void process_command(void) {
         for (; b[i]; i++)
             if (b[i] >= '0' && b[i] <= '9') freq = freq * 10 + (b[i] - '0');
         if (mode <= 4) gen_set(mode, freq);
+    }
+    // LOG:1 = start, LOG:0 = stop, LOG:2 = dump over USB
+    else if (b[0]=='L' && b[1]=='O' && b[2]=='G' && b[3]==':') {
+        uint8_t op = b[4] - '0';
+        if (op == 1) log_start();
+        else if (op == 0) log_stop();
+        else if (op == 2) log_dump();
     }
 }
 
@@ -218,6 +231,128 @@ static void send_voltage(int32_t raw) {
     if (frac < 100) uart_send_char('0');
     if (frac < 10)  uart_send_char('0');
     uart_send_int(frac);
+}
+
+// ---------------------------------------------------------------------------
+// Datalogger — stream samples to the on-board W25Q32 flash, dump over USB.
+// Records are 16 bytes, buffered one 256-byte page (16 records) at a time and
+// written sequentially; 4 KB sectors are erased on demand as we advance.
+// Record layout: [0..3] index  [4..5] temp x100  [6..13] 4x ADC millivolts.
+// ---------------------------------------------------------------------------
+
+// --- W25Q32 command set, on top of the SPI driver ---
+static void flash_write_enable(void) {
+    flash_cs_low(); spi_transfer(0x06); flash_cs_high();
+}
+static void flash_wait_busy(void) {
+    flash_cs_low(); spi_transfer(0x05);
+    while (spi_transfer(0x00) & 0x01);              // poll BUSY bit
+    flash_cs_high();
+}
+static void flash_erase_sector(uint32_t addr) {
+    flash_write_enable();
+    flash_cs_low();
+    spi_transfer(0x20);                             // 4 KB sector erase
+    spi_transfer(addr >> 16); spi_transfer(addr >> 8); spi_transfer(addr);
+    flash_cs_high();
+    flash_wait_busy();
+}
+static void flash_write_page(uint32_t addr, const uint8_t *data, int len) {
+    flash_write_enable();
+    flash_cs_low();
+    spi_transfer(0x02);                             // page program
+    spi_transfer(addr >> 16); spi_transfer(addr >> 8); spi_transfer(addr);
+    for (int i = 0; i < len; i++) spi_transfer(data[i]);
+    flash_cs_high();
+    flash_wait_busy();
+}
+static void flash_read(uint32_t addr, uint8_t *buf, int len) {
+    flash_cs_low();
+    spi_transfer(0x03);                             // read data
+    spi_transfer(addr >> 16); spi_transfer(addr >> 8); spi_transfer(addr);
+    for (int i = 0; i < len; i++) buf[i] = spi_transfer(0x00);
+    flash_cs_high();
+}
+
+#define REC_SIZE   16
+#define FLASH_SIZE (4u * 1024 * 1024)
+static uint8_t  logging   = 0;
+static uint32_t rec_count = 0;
+static uint32_t log_addr  = 0;                      // next flash byte to write
+static uint8_t  page_buf[256];
+static uint16_t page_fill = 0;
+
+static int16_t adc_to_mv(int32_t raw) {
+    if (raw == ADC_ERR) return 0x7FFF;              // error sentinel
+    return (int16_t)(((int64_t)raw * lsb_nv[adc_pga]) / 1000000);
+}
+
+static void log_flush_page(void) {
+    if (page_fill == 0) return;
+    while (page_fill < 256) page_buf[page_fill++] = 0xFF;   // pad to full page
+    if ((log_addr % 4096) == 0) flash_erase_sector(log_addr);
+    flash_write_page(log_addr, page_buf, 256);
+    log_addr += 256;
+    page_fill = 0;
+}
+
+static void log_start(void) {
+    logging = 1; rec_count = 0; log_addr = 0; page_fill = 0;
+}
+static void log_stop(void) {
+    log_flush_page();                              // commit the last partial page
+    logging = 0;
+}
+static void log_append(int16_t temp_x100, const int32_t ch[4]) {
+    if (log_addr + 256 >= FLASH_SIZE) { log_stop(); return; }   // flash full
+    uint8_t *r = &page_buf[page_fill];
+    r[0]=rec_count; r[1]=rec_count>>8; r[2]=rec_count>>16; r[3]=rec_count>>24;
+    r[4]=temp_x100; r[5]=temp_x100>>8;
+    for (int i = 0; i < 4; i++) {
+        int16_t mv = adc_to_mv(ch[i]);
+        r[6 + i*2] = mv; r[7 + i*2] = mv >> 8;
+    }
+    r[14] = 0; r[15] = 0;
+    page_fill += REC_SIZE;
+    rec_count++;
+    if (page_fill >= 256) log_flush_page();
+}
+
+// Print helpers for the dump (fixed-point integers → decimal text).
+static void print_centi(int16_t v) {               // 0.01 units → "29.60"
+    if (v < 0) { uart_send_char('-'); v = -v; }
+    uart_send_int(v / 100); uart_send_char('.');
+    int f = v % 100; if (f < 10) uart_send_char('0'); uart_send_int(f);
+}
+static void print_mv(int16_t mv) {                 // millivolts → "1.650"
+    if (mv < 0) { uart_send_char('-'); mv = -mv; }
+    uart_send_int(mv / 1000); uart_send_char('.');
+    int f = mv % 1000;
+    if (f < 100) uart_send_char('0');
+    if (f < 10)  uart_send_char('0');
+    uart_send_int(f);
+}
+
+// Read every stored record back and stream it over USB as CSV-ish lines,
+// framed by "LD:<count>" ... records ... "LE".
+static void log_dump(void) {
+    uart_send_string("LD:"); uart_send_int(rec_count); uart_send_string("\r\n");
+    uint8_t r[REC_SIZE];
+    for (uint32_t i = 0; i < rec_count; i++) {
+        flash_read(i * REC_SIZE, r, REC_SIZE);
+        uint32_t idx = r[0] | (r[1]<<8) | (r[2]<<16) | ((uint32_t)r[3]<<24);
+        int16_t temp = (int16_t)(r[4] | (r[5]<<8));
+        uart_send_string("LR:");
+        uart_send_int(idx); uart_send_char(',');
+        print_centi(temp);
+        for (int c = 0; c < 4; c++) {
+            int16_t mv = (int16_t)(r[6 + c*2] | (r[7 + c*2] << 8));
+            uart_send_char(',');
+            if (mv == 0x7FFF) uart_send_string("err"); else print_mv(mv);
+        }
+        uart_send_string("\r\n");
+    }
+    uart_send_string("LE\r\n");
 }
 
 int main(void) {
@@ -320,6 +455,14 @@ int main(void) {
         uart_send_string("|P:");
         uart_send_char('0' + adc_pga);
 
+        uart_send_string("\r\n");
+
+        // Datalogger: store this sample to flash and report state
+        if (logging) log_append((int16_t)temp_x100, ch);
+        uart_send_string("LG:");
+        uart_send_int(logging);
+        uart_send_char(':');
+        uart_send_int(rec_count);
         uart_send_string("\r\n");
 
         // Status LEDs

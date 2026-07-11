@@ -157,6 +157,13 @@
   #genFreq { background: linear-gradient(90deg, var(--ch1) var(--fill,10%), var(--panel-3) var(--fill,10%)); }
   #genFreq::-webkit-slider-thumb { background: var(--ch1); box-shadow: 0 0 14px rgba(46,230,172,0.5); }
   .gen-hint { font-family: 'IBM Plex Mono', monospace; font-size: 0.58rem; color: var(--ink-dim); margin-top: 0.6rem; line-height: 1.5; }
+
+  /* Datalogger */
+  .log-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; margin-bottom: 0.7rem; }
+  .logbtn { padding: 0.5rem 0; border-radius: 8px; text-align: center; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink-mid); cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; transition: all 0.12s; }
+  .logbtn:hover { border-color: var(--ch2); color: var(--ink); }
+  .logbtn.rec { border-color: var(--err); color: var(--err); background: rgba(255,84,112,0.12); }
+  .log-status { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--ink-dim); }
 </style>
 </head>
 <body>
@@ -234,6 +241,16 @@
       <div class="gen-row"><span>Frequency</span><span class="v" id="genFreqLabel">50 Hz</span></div>
       <input type="range" id="genFreq" min="1" max="500" value="50">
       <div class="gen-hint" id="genHint">Output on the DAC_OUT pad — probe it with an oscilloscope to see the waveform.</div>
+    </div>
+
+    <div class="block">
+      <div class="block-label">Datalogger · W25Q32</div>
+      <div class="log-controls">
+        <div class="logbtn" id="logStart">● Record</div>
+        <div class="logbtn" id="logStop">■ Stop</div>
+        <div class="logbtn" id="logDump">↓ Download</div>
+      </div>
+      <div class="log-status" id="logStatus">Idle · logs samples to on-board flash</div>
     </div>
 
     <div class="block">
@@ -345,6 +362,27 @@ genFreq.addEventListener('input',()=>{
   genFreq.style.setProperty('--fill',(genFreq.value/500*100)+'%');
   if(genMode) sendGen();
 });
+// Datalogger
+let dumpRows=[];
+document.getElementById('logStart').addEventListener('click',()=>{ if(ws&&ws.readyState===1) ws.send('LOG:1'); });
+document.getElementById('logStop').addEventListener('click',()=>{ if(ws&&ws.readyState===1) ws.send('LOG:0'); });
+document.getElementById('logDump').addEventListener('click',()=>{ dumpRows=[]; document.getElementById('logStatus').textContent='Downloading from flash…'; if(ws&&ws.readyState===1) ws.send('LOG:2'); });
+function onLog(d){
+  document.getElementById('logStart').classList.toggle('rec',d.logging);
+  document.getElementById('logStatus').textContent = d.logging
+    ? `● Recording — ${d.count} records`
+    : `Idle — ${d.count} records on flash`;
+}
+function onLogRec(d){ dumpRows.push([d.index,d.temp,...d.ch]); }
+function onLogEnd(){
+  if(!dumpRows.length){ document.getElementById('logStatus').textContent='Nothing to download'; return; }
+  let csv='index,temp_C,ain0_V,ain1_V,ain2_V,ain3_V\n';
+  dumpRows.forEach(r=>csv+=r.join(',')+'\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`daq_log_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`; a.click();
+  document.getElementById('logStatus').textContent=`Downloaded ${dumpRows.length} records from flash`;
+}
+
 function onGen(d){
   // Sync the UI to the board's actual generator state (e.g. after a refresh).
   genMode=d.mode;
@@ -408,6 +446,9 @@ function connect(){
     if (d.type==='status') setConn(d.connected,d.port);
     else if (d.type==='sample') onSample(d);
     else if (d.type==='gen') onGen(d);
+    else if (d.type==='log') onLog(d);
+    else if (d.type==='logrec') onLogRec(d);
+    else if (d.type==='logend') onLogEnd();
   };
   ws.onclose=()=>{ setConn(false); setTimeout(connect,1500); };
 }

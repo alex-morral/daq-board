@@ -89,7 +89,8 @@ wss.on('connection', (ws) => {
 
     ws.on('message', (msg) => {
         const cmd = msg.toString();
-        const ok = cmd.startsWith('DAC:') || cmd.startsWith('PGA:') || cmd.startsWith('GEN:');
+        const ok = cmd.startsWith('DAC:') || cmd.startsWith('PGA:') ||
+                   cmd.startsWith('GEN:') || cmd.startsWith('LOG:');
         if (ok && connected && serial) {
             serial.write(cmd + '\n', (e) => { if (e) console.log('write err', e.message); });
         }
@@ -102,6 +103,21 @@ function parseLine(line) {
     if (line.startsWith('G:')) {
         const [, mode, freq] = line.split(':');
         return { type: 'gen', mode: parseInt(mode), freq: parseInt(freq) };
+    }
+    // Datalogger: status, dump header, one record, dump end.
+    if (line.startsWith('LG:')) {
+        const [, st, count] = line.split(':');
+        return { type: 'log', logging: st === '1', count: parseInt(count) };
+    }
+    if (line.startsWith('LD:')) {
+        return { type: 'logdump', count: parseInt(line.slice(3)) };
+    }
+    if (line.startsWith('LR:')) {
+        const f = line.slice(3).split(',');   // idx,temp,a0,a1,a2,a3
+        return { type: 'logrec', index: f[0], temp: f[1], ch: f.slice(2) };
+    }
+    if (line.startsWith('LE')) {
+        return { type: 'logend' };
     }
     // "T:29.60|A0:0.580|A1:err|A2:0.456|A3:0.789|D:2048|P:1"
     // A field of "err" becomes null so the UI can show a fault instead of a number.
