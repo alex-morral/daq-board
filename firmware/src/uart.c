@@ -14,6 +14,9 @@
 #define USART1_BRR      (*(volatile uint32_t *)(USART1_BASE + 0x08))
 #define USART1_CR1      (*(volatile uint32_t *)(USART1_BASE + 0x0C))
 
+// NVIC (interrupt controller) set-enable register 1 (IRQ 32..63)
+#define NVIC_ISER1      (*(volatile uint32_t *)0xE000E104)
+
 void uart_init(void) {
     // Enable clocks: GPIOA + USART1
     RCC_APB2ENR |= (1 << 2) | (1 << 14);   // IOPAEN + USART1EN
@@ -25,8 +28,13 @@ void uart_init(void) {
 
     // 115200 baud @ 8MHz HSI: BRR = 8000000 / 115200 = 69 = 0x45 (0.6% error, OK)
     USART1_BRR = 0x45;
-    // Enable USART, TX, RX
-    USART1_CR1 = (1 << 13) | (1 << 3) | (1 << 2);
+    // Enable USART, TX, RX, and the RX-not-empty interrupt (RXNEIE)
+    USART1_CR1 = (1 << 13) | (1 << 5) | (1 << 3) | (1 << 2);
+
+    // Enable USART1 interrupt in the NVIC (IRQ 37 → ISER1 bit 5). This lets an
+    // incoming byte be captured the instant it arrives, so commands are never
+    // lost while the main loop is busy (e.g. driving the DAC in generator mode).
+    NVIC_ISER1 |= (1 << 5);
 }
 
 void uart_send_char(char c) {

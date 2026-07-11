@@ -89,15 +89,22 @@ wss.on('connection', (ws) => {
 
     ws.on('message', (msg) => {
         const cmd = msg.toString();
-        if ((cmd.startsWith('DAC:') || cmd.startsWith('PGA:')) && connected && serial) {
+        const ok = cmd.startsWith('DAC:') || cmd.startsWith('PGA:') || cmd.startsWith('GEN:');
+        if (ok && connected && serial) {
             serial.write(cmd + '\n', (e) => { if (e) console.log('write err', e.message); });
         }
     });
 });
 
-// Parse "T:29.60|A0:0.580|A1:err|A2:0.456|A3:0.789|D:2048|P:1"
-// A field of "err" becomes null so the UI can show a fault instead of a number.
+// Parse the board's serial lines into tagged objects for the browser.
+// "G:<mode>:<freq>" is the function-generator status; "T:..." is a sample.
 function parseLine(line) {
+    if (line.startsWith('G:')) {
+        const [, mode, freq] = line.split(':');
+        return { type: 'gen', mode: parseInt(mode), freq: parseInt(freq) };
+    }
+    // "T:29.60|A0:0.580|A1:err|A2:0.456|A3:0.789|D:2048|P:1"
+    // A field of "err" becomes null so the UI can show a fault instead of a number.
     if (!line.startsWith('T:')) return null;
     const p = {};
     line.split('|').forEach(kv => { const [k, v] = kv.split(':'); p[k] = v; });

@@ -145,6 +145,35 @@ npm start            # auto-detects the CH340 port → http://localhost:3000
 
 ---
 
+## Function generator (DDS)
+
+The board doesn't just measure — it also **generates** waveforms. A hardware
+timer (TIM2) ticks at a fixed sample rate; on each tick a 32-bit phase
+accumulator advances and its top bits index a wavetable, whose value is written
+to the DAC. This is **Direct Digital Synthesis**, the same method used in real
+signal generators. Sine, square, triangle and sawtooth are selectable from the
+dashboard, with adjustable frequency.
+
+Getting reliable control while generating required moving UART reception to an
+**interrupt** (`USART1_IRQHandler`): each incoming command byte is captured the
+instant it arrives, so nothing is lost while the CPU is busy driving the DAC.
+
+**Verification without an oscilloscope.** With no scope on hand, the waveforms
+were validated by measuring the DAC output with a multimeter and comparing
+against signal theory — the DC average is identical for all shapes (they're
+centred at mid-scale), while the AC (RMS) value differs by waveform:
+
+| Waveform | Measured AC (RMS) | Theory (A/√k) |
+|---|---|---|
+| DC average (all) | 1.65 V | 1.65 V (mid-scale) |
+| Sine | 1.16 V | A/√2 = **1.17 V** |
+| Square | ~1.6 V | A ≈ **1.65 V** |
+
+The measured sine RMS matching A/√2 almost exactly confirms the shapes are
+genuinely different, not just a changing DC level.
+
+---
+
 ## Firmware
 
 Bare-metal, **no HAL** — direct register access so every line is understood.
@@ -190,9 +219,10 @@ Kept as engineering notes rather than a rebuild:
 
 ## Roadmap
 
-1. **DAC function generator** (sine/triangle/square via HW timer)
+1. ~~**DAC function generator** (sine/triangle/square via HW timer)~~ ✅ done
 2. **Standalone datalogger** to the W25Q32, dumped over USB
 3. **Timer + DMA sampling** with interrupt-driven UART (kHz sample rates)
+   *(interrupt-driven UART already added for the generator)*
 4. **PYNQ-Z2 integration** — feed samples to an FPGA FIR filter (ties the 3
    portfolio projects into one signal chain: PCB → FPGA → PC)
 5. **Flash-stored calibration** (offset/gain against a known reference)

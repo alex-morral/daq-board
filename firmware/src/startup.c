@@ -30,9 +30,12 @@ void *memset(void *s, int c, unsigned int n) {
     return s;
 }
 
-// Cortex-M3 core vector table (entries 0-15). External peripheral IRQs are
-// omitted because this firmware enables no interrupts; all faults trap in
-// Default_Handler instead of jumping to garbage.
+// USART1 receive interrupt handler (defined in main.c).
+void USART1_IRQHandler(void);
+
+// Vector table: the 16 Cortex-M3 core entries plus the external peripheral IRQs
+// up to USART1 (position 37 → table index 53). Only USART1's is used; the rest
+// trap in Default_Handler. External IRQs beyond USART1 are omitted (unused).
 __attribute__((section(".isr_vector")))
 void (*const vectors[])(void) = {
     (void (*)(void))(&_estack),  //  0 Initial stack pointer
@@ -48,4 +51,16 @@ void (*const vectors[])(void) = {
     0,                           // 13 Reserved
     Default_Handler,             // 14 PendSV
     Default_Handler,             // 15 SysTick
+    // --- External interrupts (IRQ0..IRQ37) ---
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 16-19  IRQ0-3
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 20-23  IRQ4-7
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 24-27  IRQ8-11
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 28-31  IRQ12-15
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 32-35  IRQ16-19
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 36-39  IRQ20-23
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 40-43  IRQ24-27
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 44-47  IRQ28-31
+    Default_Handler, Default_Handler, Default_Handler, Default_Handler, // 48-51  IRQ32-35
+    Default_Handler,                                                    // 52     IRQ36
+    USART1_IRQHandler,                                                  // 53     IRQ37 USART1
 };

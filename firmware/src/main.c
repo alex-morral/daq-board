@@ -2,6 +2,7 @@
 #include "i2c.h"
 #include "uart.h"
 #include "spi.h"
+#include "timer.h"
 
 #define GPIOB_BASE      0x40010C00
 #define GPIOB_CRL       (*(volatile uint32_t *)(GPIOB_BASE + 0x00))
@@ -52,48 +53,123 @@ static int mcp4725_write(uint16_t value_12bit) {
     return i2c_write_bytes(MCP4725_ADDR, data, 2);
 }
 
-static char rx_buf[16];
-static int rx_idx = 0;
-static volatile int comm_activity = 0;
+// ---------------------------------------------------------------------------
+// Function generator (DAC + timer, Direct Digital Synthesis)
+//
+// A hardware timer ticks at a fixed sample rate GEN_FS. On each tick a 32-bit
+// phase accumulator advances by a "tuning word"; its top 6 bits index a
+// 64-point wavetable, and that value is written to the DAC. Output frequency =
+// tuning_word / 2^32 * GEN_FS, so we get fine frequency control from one table.
+// This is exactly how a DDS signal generator works.
+// ---------------------------------------------------------------------------
+#define GEN_FS   2000u    // DAC update rate (Hz); bounded by I2C write time
 
+// One cycle of a sine, 64 points, scaled to the 12-bit DAC range (0..4095).
+static const uint16_t sine64[64] = {
+    2048,2249,2447,2642,2831,3013,3185,3347,3495,3630,3750,3853,3939,4007,4056,4085,
+    4095,4085,4056,4007,3939,3853,3750,3630,3495,3347,3185,3013,2831,2642,2447,2249,
+    2048,1847,1649,1454,1265,1083, 911, 749, 601, 466, 346, 243, 157,  89,  40,  11,
+       1,  11,  40,  89, 157, 243, 346, 466, 601, 749, 911,1083,1265,1454,1649,1847
+};
+
+static volatile uint8_t  gen_mode  = 0;   // 0=off 1=sine 2=square 3=triangle 4=saw
+static volatile uint16_t gen_freq  = 0;   // requested output frequency (Hz)
+static uint32_t gen_phase = 0;            // DDS phase accumulator
+static uint32_t gen_tw    = 0;            // DDS tuning word
+
+static void gen_set(uint8_t mode, uint16_t freq) {
+    if (freq > 500) freq = 500;           // keep waveforms well-sampled
+    gen_mode = mode;
+    gen_freq = freq;
+    gen_phase = 0;
+    // tuning_word = freq * 2^32 / Fs  (64-bit avoids overflow)
+    gen_tw = (uint32_t)(((uint64_t)freq << 32) / GEN_FS);
+    if (mode == 0) mcp4725_write(dac_value);   // restore manual DAC level
+}
+
+// Produce one output sample from the current phase, per waveform.
+static uint16_t gen_sample(void) {
+    uint32_t p = gen_phase;
+    switch (gen_mode) {
+        case 1: return sine64[p >> 26];                     // sine (table)
+        case 2: return (p & 0x80000000u) ? 4095 : 0;        // square
+        case 3: {                                            // triangle
+            uint32_t s = p >> 20;                            // 0..4095
+            return s < 2048 ? (s * 2) : ((4095 - s) * 2);
+        }
+        case 4: return p >> 20;                              // sawtooth
+        default: return dac_value;
+    }
+}
+
+// A completed command line, filled by the USART1 interrupt and consumed by the
+// main loop. The ISR only buffers text (never touches I2C), so the main loop is
+// free to run the actual command — which does I2C — at a safe point.
+static volatile char    cmd_buf[24];
+static volatile uint8_t cmd_ready = 0;
+static volatile int     comm_activity = 0;
+
+// USART1 receive interrupt: captures each incoming byte the moment it arrives,
+// so no command byte is ever lost, even while the main loop is busy driving the
+// DAC. Assembles bytes into a line and flags it complete on newline.
+void USART1_IRQHandler(void) {
+    static char line[24];
+    static uint8_t idx = 0;
+    while (USART1_SR & (1 << 5)) {          // RXNE: a byte is waiting
+        char c = USART1_DR;                  // reading DR clears the flag
+        if (c == '\n' || c == '\r') {
+            if (idx > 0) {
+                for (uint8_t i = 0; i < idx; i++) cmd_buf[i] = line[i];
+                cmd_buf[idx] = 0;            // null-terminate
+                cmd_ready = 1;
+                idx = 0;
+            }
+        } else if (idx < sizeof(line) - 1) {
+            line[idx++] = c;
+        }
+    }
+}
+
+// Parse and act on the last completed command (runs in main context, so I2C is
+// safe here). cmd_buf is a null-terminated string like "DAC:2048" or "GEN:1:50".
 static void process_command(void) {
     comm_activity = 8;  // light D3 for next 8 loop iterations
-    if (rx_idx >= 4 && rx_buf[0] == 'D' && rx_buf[1] == 'A' && rx_buf[2] == 'C' && rx_buf[3] == ':') {
+    const volatile char *b = cmd_buf;
+
+    if (b[0]=='D' && b[1]=='A' && b[2]=='C' && b[3]==':') {
         uint16_t val = 0;
-        for (int i = 4; i < rx_idx; i++) {
-            if (rx_buf[i] >= '0' && rx_buf[i] <= '9')
-                val = val * 10 + (rx_buf[i] - '0');
-        }
+        for (int i = 4; b[i]; i++)
+            if (b[i] >= '0' && b[i] <= '9') val = val * 10 + (b[i] - '0');
         if (val > 4095) val = 4095;
         dac_value = val;
         mcp4725_write(dac_value);
     }
-    // PGA:X command (0-5)
-    if (rx_idx >= 4 && rx_buf[0] == 'P' && rx_buf[1] == 'G' && rx_buf[2] == 'A' && rx_buf[3] == ':') {
-        uint8_t val = rx_buf[4] - '0';
+    else if (b[0]=='P' && b[1]=='G' && b[2]=='A' && b[3]==':') {
+        uint8_t val = b[4] - '0';
         if (val <= 5) adc_pga = val;
+    }
+    // GEN:<mode>:<freq>  e.g. "GEN:1:50" = sine 50 Hz, "GEN:0" = off
+    else if (b[0]=='G' && b[1]=='E' && b[2]=='N' && b[3]==':') {
+        uint8_t mode = b[4] - '0';
+        uint16_t freq = 0;
+        int i = 5;
+        if (b[i] == ':') i++;                            // skip separator
+        for (; b[i]; i++)
+            if (b[i] >= '0' && b[i] <= '9') freq = freq * 10 + (b[i] - '0');
+        if (mode <= 4) gen_set(mode, freq);
     }
 }
 
-static void check_uart_rx(void) {
-    while (USART1_SR & (1 << 5)) {
-        char c = USART1_DR;
-        if (c == '\n' || c == '\r') {
-            if (rx_idx > 0) {
-                rx_buf[rx_idx] = 0;
-                process_command();
-                rx_idx = 0;
-            }
-        } else if (rx_idx < 15) {
-            rx_buf[rx_idx++] = c;
-        }
+// Run any pending command. Called from safe points in the main loop.
+static void poll_command(void) {
+    if (cmd_ready) {
+        process_command();
+        cmd_ready = 0;
     }
 }
 
 void delay(volatile uint32_t count) {
-    while (count--) {
-        check_uart_rx();
-    }
+    while (count--);
 }
 
 // Read one single-ended ADC channel. Returns the signed 16-bit code, or
@@ -148,6 +224,7 @@ int main(void) {
     uart_init();
     i2c_init();
     spi_init();
+    timer_init(GEN_FS);                    // TIM2 tick source for the generator
 
     // Status LEDs as push-pull outputs (2MHz)
     RCC_APB2ENR2 |= (1 << 4);              // enable GPIOC clock (for PC13)
@@ -179,8 +256,31 @@ int main(void) {
 
     uart_send_string("\r\n");
 
+    uint32_t gen_status = 0;
+
     while (1) {
-        check_uart_rx();
+        poll_command();
+
+        // --- Function-generator mode ---------------------------------------
+        // When active we dedicate the loop to steady waveform output (no sensor
+        // I2C, which shares the same bus). Each timer tick advances the DDS
+        // phase and drives the DAC; a status line is sent ~4x/second.
+        if (gen_mode) {
+            timer_wait_tick();
+            gen_phase += gen_tw;
+            mcp4725_write(gen_sample());
+            if (++gen_status >= GEN_FS / 4) {
+                gen_status = 0;
+                uart_send_string("G:");
+                uart_send_int(gen_mode);
+                uart_send_char(':');
+                uart_send_int(gen_freq);
+                uart_send_string("\r\n");
+                LED_HB_TOGGLE();
+                LED_DAC_ON();
+            }
+            continue;
+        }
 
         // TMP117
         uint16_t raw = 0;
