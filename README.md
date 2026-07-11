@@ -188,6 +188,22 @@ earns its place on the board.
 
 ---
 
+## High-speed capture (timer + DMA, software scope)
+
+The I²C ADS1115 tops out around 860 SPS, so for fast sampling the firmware uses
+the **STM32's own 12-bit ADC** on **PA0** (which *is* broken out, on the J2
+header). A hardware timer (TIM3) triggers each conversion and **DMA** streams the
+results straight into RAM — the CPU is idle during the capture, so the rate is
+set purely by the timer (tested to tens of kSPS). A block of 480 samples is then
+sent to the dashboard and drawn as a waveform: a **software oscilloscope**.
+
+This is the "demo → serious firmware" jump: hardware-timed acquisition, DMA, and
+interrupt-driven UART working together. It also gives the board a genuinely
+**accessible analog input** (J2·PA0) — feed it a signal (pot, source, or a wire
+from DAC_OUT) and watch it on screen in real time.
+
+---
+
 ## Firmware
 
 Bare-metal, **no HAL** — direct register access so every line is understood.
@@ -235,8 +251,7 @@ Kept as engineering notes rather than a rebuild:
 
 1. ~~**DAC function generator** (sine/triangle/square via HW timer)~~ ✅ done
 2. ~~**Standalone datalogger** to the W25Q32, dumped over USB~~ ✅ done
-3. **Timer + DMA sampling** with interrupt-driven UART (kHz sample rates)
-   *(interrupt-driven UART already added for the generator)*
+3. ~~**Timer + DMA sampling** with interrupt-driven UART (kHz sample rates)~~ ✅ done
 4. **PYNQ-Z2 integration** — feed samples to an FPGA FIR filter (ties the 3
    portfolio projects into one signal chain: PCB → FPGA → PC)
 5. **Flash-stored calibration** (offset/gain against a known reference)

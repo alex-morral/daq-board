@@ -90,7 +90,8 @@ wss.on('connection', (ws) => {
     ws.on('message', (msg) => {
         const cmd = msg.toString();
         const ok = cmd.startsWith('DAC:') || cmd.startsWith('PGA:') ||
-                   cmd.startsWith('GEN:') || cmd.startsWith('LOG:');
+                   cmd.startsWith('GEN:') || cmd.startsWith('LOG:') ||
+                   cmd.startsWith('CAP:');
         if (ok && connected && serial) {
             serial.write(cmd + '\n', (e) => { if (e) console.log('write err', e.message); });
         }
@@ -118,6 +119,12 @@ function parseLine(line) {
     }
     if (line.startsWith('LE')) {
         return { type: 'logend' };
+    }
+    // High-speed capture block: "CB:<rate>:<n>:v0,v1,..."
+    if (line.startsWith('CB:')) {
+        const p = line.split(':');
+        const samples = p[3] ? p[3].split(',').map(Number) : [];
+        return { type: 'capture', rate: parseInt(p[1]), n: parseInt(p[2]), samples };
     }
     // "T:29.60|A0:0.580|A1:err|A2:0.456|A3:0.789|D:2048|P:1"
     // A field of "err" becomes null so the UI can show a fault instead of a number.

@@ -3,6 +3,7 @@
 #include "uart.h"
 #include "spi.h"
 #include "timer.h"
+#include "hsadc.h"
 
 #define GPIOB_BASE      0x40010C00
 #define GPIOB_CRL       (*(volatile uint32_t *)(GPIOB_BASE + 0x00))
@@ -71,6 +72,10 @@ static const uint16_t sine64[64] = {
     2048,1847,1649,1454,1265,1083, 911, 749, 601, 466, 346, 243, 157,  89,  40,  11,
        1,  11,  40,  89, 157, 243, 346, 466, 601, 749, 911,1083,1265,1454,1649,1847
 };
+
+// High-speed capture buffer (internal ADC on PA0, filled by timer+DMA).
+#define HS_N 480
+static uint16_t hs_buf[HS_N];
 
 static volatile uint8_t  gen_mode  = 0;   // 0=off 1=sine 2=square 3=triangle 4=saw
 static volatile uint16_t gen_freq  = 0;   // requested output frequency (Hz)
@@ -170,6 +175,26 @@ static void process_command(void) {
         if (op == 1) log_start();
         else if (op == 0) log_stop();
         else if (op == 2) log_dump();
+    }
+    // CAP:<rate> = capture HS_N samples of PA0 at <rate> Hz (timer+DMA) and
+    // stream them back as "CB:<rate>:<n>:v0,v1,...". A software oscilloscope.
+    else if (b[0]=='C' && b[1]=='A' && b[2]=='P' && b[3]==':') {
+        uint32_t rate = 0;
+        for (int i = 4; b[i]; i++)
+            if (b[i] >= '0' && b[i] <= '9') rate = rate * 10 + (b[i] - '0');
+        if (rate < 100) rate = 100;
+        if (rate > 100000) rate = 100000;
+        hsadc_capture(hs_buf, HS_N, rate);
+        uart_send_string("CB:");
+        uart_send_int(rate);
+        uart_send_char(':');
+        uart_send_int(HS_N);
+        uart_send_char(':');
+        for (int i = 0; i < HS_N; i++) {
+            uart_send_int(hs_buf[i] & 0x0FFF);   // 12-bit sample
+            if (i < HS_N - 1) uart_send_char(',');
+        }
+        uart_send_string("\r\n");
     }
 }
 
@@ -360,6 +385,7 @@ int main(void) {
     i2c_init();
     spi_init();
     timer_init(GEN_FS);                    // TIM2 tick source for the generator
+    hsadc_init();                          // internal ADC + TIM3 + DMA (PA0 capture)
 
     // Status LEDs as push-pull outputs (2MHz)
     RCC_APB2ENR2 |= (1 << 4);              // enable GPIOC clock (for PC13)

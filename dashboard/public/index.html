@@ -244,6 +244,17 @@
     </div>
 
     <div class="block">
+      <div class="block-label">High-Speed Capture · PA0 (J2)</div>
+      <div class="gen-row"><span>Sample rate</span><span class="v" id="capRateLabel">10 kHz</span></div>
+      <input type="range" id="capRate" min="1" max="100" value="10">
+      <div class="log-controls" style="grid-template-columns:1fr 1fr;">
+        <div class="logbtn" id="capBtn">◎ Capture</div>
+        <div class="logbtn" id="capLive">Live</div>
+      </div>
+      <div class="log-status" id="capStatus">Internal ADC via timer + DMA — feed a signal into J2·PA0</div>
+    </div>
+
+    <div class="block">
       <div class="block-label">Datalogger · W25Q32</div>
       <div class="log-controls">
         <div class="logbtn" id="logStart">● Record</div>
@@ -362,6 +373,44 @@ genFreq.addEventListener('input',()=>{
   genFreq.style.setProperty('--fill',(genFreq.value/500*100)+'%');
   if(genMode) sendGen();
 });
+// High-speed capture
+let captureData=null;
+const capRate=document.getElementById('capRate');
+capRate.addEventListener('input',()=>{ document.getElementById('capRateLabel').textContent=capRate.value+' kHz'; capRate.style.setProperty('--fill',(capRate.value/100*100)+'%'); });
+document.getElementById('capBtn').addEventListener('click',()=>{ if(ws&&ws.readyState===1){ ws.send('CAP:'+(capRate.value*1000)); document.getElementById('capStatus').textContent='Capturing…'; } });
+document.getElementById('capLive').addEventListener('click',()=>{ captureData=null; document.getElementById('capStatus').textContent='Live'; document.getElementById('scopeTag').textContent='Live'; });
+function onCapture(d){
+  captureData=d;
+  const win=(d.n/d.rate*1000).toFixed(1);
+  document.getElementById('capStatus').textContent=`${d.n} samples @ ${d.rate/1000} kHz · ${win} ms window`;
+  document.getElementById('scopeTag').textContent=`PA0 capture · ${d.n} pts @ ${d.rate/1000} kHz · ${win} ms`;
+  drawCapture();
+}
+function drawCapture(){
+  if(!captureData) return;
+  const cv=document.getElementById('scope'), ctx=cv.getContext('2d');
+  const dpr=devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.scale(dpr,dpr);
+  const w=r.width,h=r.height; ctx.clearRect(0,0,w,h);
+  const s=captureData.samples; if(!s||s.length<2) return;
+  const pad={t:14,b:22,l:52,r:14}, cw=w-pad.l-pad.r, ch=h-pad.t-pad.b;
+  const yMax=3.3, yR=3.3;
+  const xp=i=>pad.l+(i/(s.length-1))*cw, yp=v=>pad.t+ch-(v/yR)*ch;
+  ctx.font='10.5px "IBM Plex Mono", monospace';
+  for(let i=0;i<=4;i++){ const gy=pad.t+(ch/4)*i;
+    ctx.strokeStyle='rgba(38,49,63,.7)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(w-pad.r,gy); ctx.stroke();
+    ctx.fillStyle='#5d6d82'; ctx.textAlign='right'; ctx.fillText((yMax-(yR/4)*i).toFixed(2)+'V', pad.l-7, gy+3);
+  }
+  for(let i=0;i<=8;i++){ const gx=pad.l+(cw/8)*i; ctx.strokeStyle='rgba(38,49,63,.5)'; ctx.beginPath(); ctx.moveTo(gx,pad.t); ctx.lineTo(gx,h-pad.b); ctx.stroke(); }
+  const g=ctx.createLinearGradient(0,pad.t,0,h-pad.b); g.addColorStop(0,'rgba(90,162,255,.14)'); g.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.moveTo(xp(0),yp(s[0]/4095*3.3));
+  for(let i=1;i<s.length;i++) ctx.lineTo(xp(i),yp(s[i]/4095*3.3));
+  ctx.lineTo(xp(s.length-1),h-pad.b); ctx.lineTo(xp(0),h-pad.b); ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(xp(0),yp(s[0]/4095*3.3));
+  for(let i=1;i<s.length;i++) ctx.lineTo(xp(i),yp(s[i]/4095*3.3));
+  ctx.strokeStyle='#5aa2ff'; ctx.lineWidth=1.6; ctx.lineJoin='round'; ctx.stroke();
+}
+
 // Datalogger
 let dumpRows=[];
 document.getElementById('logStart').addEventListener('click',()=>{ if(ws&&ws.readyState===1) ws.send('LOG:1'); });
@@ -428,8 +477,11 @@ function onSample(d){
     if (chD[i].length>N) chD[i].shift();
   }
   cell('vDac', d.dac/4095*3.3, 'V', 3);
-  document.getElementById('scopeTag').textContent = `${count} samples · ${PGA_L[d.pga]} · ${chD[0].length}/${N} pts`;
-  drawScope(); drawTemp();
+  if (!captureData) {
+    document.getElementById('scopeTag').textContent = `${count} samples · ${PGA_L[d.pga]} · ${chD[0].length}/${N} pts`;
+    drawScope();
+  }
+  drawTemp();
   const t=new Date(d.timestamp).toLocaleTimeString('es-ES');
   const log=document.getElementById('log'), ln=document.createElement('div'); ln.className='log-line';
   const cv=(v)=> v===null?'<span style="color:var(--err)">err</span>':v.toFixed(3);
@@ -449,6 +501,7 @@ function connect(){
     else if (d.type==='log') onLog(d);
     else if (d.type==='logrec') onLogRec(d);
     else if (d.type==='logend') onLogEnd();
+    else if (d.type==='capture') onCapture(d);
   };
   ws.onclose=()=>{ setConn(false); setTimeout(connect,1500); };
 }
@@ -456,8 +509,8 @@ connect();
 
 setInterval(()=>{ const now=Date.now(), el=(now-lastSps)/1000; document.getElementById('rate').textContent=(spsC/el).toFixed(1)+' S/s'; spsC=0; lastSps=now; },2000);
 setInterval(()=>{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('es-ES'); },1000);
-addEventListener('resize',()=>{ drawScope(); drawTemp(); });
-new ResizeObserver(()=>{ drawScope(); drawTemp(); }).observe(document.getElementById('scope'));
+addEventListener('resize',()=>{ captureData?drawCapture():drawScope(); drawTemp(); });
+new ResizeObserver(()=>{ captureData?drawCapture():drawScope(); drawTemp(); }).observe(document.getElementById('scope'));
 new ResizeObserver(()=>drawTemp()).observe(document.getElementById('temp'));
 </script>
 </body>
