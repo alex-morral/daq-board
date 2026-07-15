@@ -199,8 +199,11 @@ sent to the dashboard and drawn as a waveform: a **software oscilloscope**.
 
 This is the "demo → serious firmware" jump: hardware-timed acquisition, DMA, and
 interrupt-driven UART working together. It also gives the board a genuinely
-**accessible analog input** (J2·PA0) — feed it a signal (pot, source, or a wire
-from DAC_OUT) and watch it on screen in real time.
+**accessible analog input** (J2·PA0) — unlike the ADS1115's AIN pins, which this
+revision does not break out. Validated with a real **LDR light sensor** wired to
+J2·PA0: covering the sensor moves the captured level up and down live — a real,
+physically-controllable analog input, which is exactly what the precision ADC's
+inputs could not be without a board respin.
 
 ---
 
