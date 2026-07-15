@@ -82,6 +82,11 @@ static volatile uint16_t gen_freq  = 0;   // requested output frequency (Hz)
 static uint32_t gen_phase = 0;            // DDS phase accumulator
 static uint32_t gen_tw    = 0;            // DDS tuning word
 
+// PYNQ demo: stream a digital test signal over UART = clean low sine + a
+// high-frequency component at fs/4 (the "noise" the FPGA FIR will remove).
+#define SIG_N 256
+static volatile uint8_t sig_mode = 0;     // 1 = stream FX: blocks for the PYNQ
+
 static void gen_set(uint8_t mode, uint16_t freq) {
     if (freq > 500) freq = 500;           // keep waveforms well-sampled
     gen_mode = mode;
@@ -175,6 +180,10 @@ static void process_command(void) {
         if (op == 1) log_start();
         else if (op == 0) log_stop();
         else if (op == 2) log_dump();
+    }
+    // SIG:1 = stream test-signal blocks to the PYNQ, SIG:0 = stop
+    else if (b[0]=='S' && b[1]=='I' && b[2]=='G' && b[3]==':') {
+        sig_mode = (b[4] == '1');
     }
     // CAP:<rate> = capture HS_N samples of PA0 at <rate> Hz (timer+DMA) and
     // stream them back as "CB:<rate>:<n>:v0,v1,...". A software oscilloscope.
@@ -440,6 +449,28 @@ int main(void) {
                 LED_HB_TOGGLE();
                 LED_DAC_ON();
             }
+            continue;
+        }
+
+        // --- PYNQ test-signal mode -----------------------------------------
+        // Stream one block of SIG_N samples = clean low sine + a high-frequency
+        // component at fs/4, as "FX:v0,v1,...". The FPGA FIR (a 4-tap moving
+        // average) nulls the fs/4 component, so the PYNQ plot shows noisy in →
+        // clean out. No sensor telemetry while streaming.
+        if (sig_mode) {
+            uint32_t ph_lo = 0, ph_hi = 0;
+            uart_send_string("FX:");
+            for (int i = 0; i < SIG_N; i++) {
+                int16_t lo = (int16_t)sine64[ph_lo >> 26] - 2048;   // clean sine
+                int16_t hi = (int16_t)sine64[ph_hi >> 26] - 2048;   // fs/4 "noise"
+                uart_send_int(lo + hi / 2);
+                if (i < SIG_N - 1) uart_send_char(',');
+                ph_lo += 67108864u;     // 4 cycles over 256 samples (low freq)
+                ph_hi += 1073741824u;   // 64 cycles over 256 samples = fs/4
+            }
+            uart_send_string("\r\n");
+            LED_HB_TOGGLE();
+            delay(400000);              // ~throttle blocks
             continue;
         }
 
