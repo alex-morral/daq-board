@@ -28,6 +28,10 @@ samples it needed one small RTL change in `src/audio_fir_top.vhd`:
 Rebuild the bitstream and copy `audio_system.bit` (+ the unchanged `.hwh`) to the
 PYNQ next to `daq_fir_demo.py`.
 
+The exact modified top-level used for this integration is kept here as a
+reference: [`audio_fir_top.vhd`](audio_fir_top.vhd) (drop it into the FIR
+project's `src/` and rebuild).
+
 ## Run
 
 STM32 firmware must include the `SIG` command (streams a test signal); it's in
